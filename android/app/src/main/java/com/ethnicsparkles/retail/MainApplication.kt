@@ -1,4 +1,4 @@
-package com.jwelleryapp
+package com.ethnicsparkles.retail
 
 import android.app.Application
 import com.facebook.react.PackageList
