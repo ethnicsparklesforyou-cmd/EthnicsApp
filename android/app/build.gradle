@@ -8,7 +8,7 @@ react {
 
 def enableProguardInReleaseBuilds = true
 def enableAbiSplits = gradle.startParameter.taskNames.any { taskName ->
-    taskName.toLowerCase().contains("release")
+    taskName.toLowerCase().contains("assemblerelease")
 }
 
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
@@ -44,11 +44,17 @@ android {
             keyPassword 'android'
         }
         release {
-            // Uses debug keystore for now — replace with your release keystore before publishing
-            storeFile file('debug.keystore')
-            storePassword 'android'
-            keyAlias 'androiddebugkey'
-            keyPassword 'android'
+            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
+                storeFile file(MYAPP_RELEASE_STORE_FILE)
+                storePassword MYAPP_RELEASE_STORE_PASSWORD
+                keyAlias MYAPP_RELEASE_KEY_ALIAS
+                keyPassword MYAPP_RELEASE_KEY_PASSWORD
+            } else {
+                storeFile file('my-upload-key.keystore')
+                storePassword 'android'
+                keyAlias 'my-key-alias'
+                keyPassword 'android'
+            }
         }
     }
 
