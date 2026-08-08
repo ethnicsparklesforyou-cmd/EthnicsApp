@@ -33,6 +33,7 @@ import { fetchActiveBanners, fetchCategories, fetchProducts } from '../../servic
 import { fetchAddresses } from '../../services/address';
 import { getBannerImageUrl } from '../../utils/imageUtils';
 import { AppIcon } from '../../components/common';
+import { useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { TabParamList } from '../../navigation/types';
 
@@ -884,28 +885,52 @@ export function HomeScreen({ navigation }: Props) {
     setMode(isDark ? 'light' : 'dark');
   }, [isDark, setMode, themeRotation]);
 
-  useEffect(() => {
-    if (!user?.id) { setLocationLabel('Mumbai, Maharashtra'); return; }
-    fetchAddresses(user.id).then((res: any) => {
-      const list = res?.data?.data ?? res?.data ?? res?.result?.data ?? res?.result ?? [];
-      const primary = list.find((a: any) => a.isDefault) ?? list[0];
-      const city = primary?.city && String(primary.city).trim() !== 'undefined' && String(primary.city).trim() !== 'null' ? String(primary.city).trim() : null;
-      const state = primary?.state && String(primary.state).trim() !== 'undefined' && String(primary.state).trim() !== 'null' ? String(primary.state).trim() : null;
-      const pincode = primary?.pincode || primary?.zipCode || null;
+  const loadUserLocation = useCallback(() => {
+    if (!user?.id) {
+      setLocationLabel('Select Location');
+      return;
+    }
+    fetchAddresses(user.id)
+      .then((res: any) => {
+        const list = res?.data?.data ?? res?.data ?? res?.result?.data ?? res?.result ?? [];
+        const addressList = Array.isArray(list) ? list : [];
+        const primary = addressList.find((a: any) => a.isDefault || a.is_default || String(a.isDefault) === '1') ?? addressList[0];
 
-      if (city && state) {
-        setLocationLabel(`${city}, ${state}`);
-      } else if (city) {
-        setLocationLabel(city);
-      } else if (pincode) {
-        setLocationLabel(`Deliver to ${pincode}`);
-      } else {
-        setLocationLabel('Mumbai, Maharashtra');
-      }
-    }).catch(() => {
-      setLocationLabel('Mumbai, Maharashtra');
-    });
+        if (!primary) {
+          setLocationLabel('Select Location');
+          return;
+        }
+
+        const city = (primary?.cityName || primary?.city || '').trim();
+        const state = (primary?.stateName || primary?.state_name || primary?.state || '').trim();
+        const postalCode = String(primary?.postal_code || primary?.pincode || primary?.zipCode || '').trim();
+
+        const cleanCity = city && city !== 'undefined' && city !== 'null' ? city : null;
+        const cleanState = state && state !== 'undefined' && state !== 'null' ? state : null;
+        const cleanPostal = postalCode && postalCode !== 'undefined' && postalCode !== 'null' ? postalCode : null;
+
+        if (cleanCity && cleanState) {
+          setLocationLabel(`${cleanCity}, ${cleanState}`);
+        } else if (cleanCity && cleanPostal) {
+          setLocationLabel(`${cleanCity} - ${cleanPostal}`);
+        } else if (cleanCity) {
+          setLocationLabel(cleanCity);
+        } else if (cleanPostal) {
+          setLocationLabel(`PIN ${cleanPostal}`);
+        } else {
+          setLocationLabel('Select Location');
+        }
+      })
+      .catch(() => {
+        setLocationLabel('Select Location');
+      });
   }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadUserLocation();
+    }, [loadUserLocation])
+  );
 
   const scrollY = useRef(new Animated.Value(0)).current;
   const bgInterpolate = scrollY.interpolate({
@@ -1105,12 +1130,24 @@ export function HomeScreen({ navigation }: Props) {
               <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 15, letterSpacing: 0.2 }} numberOfLines={1}>
                 Hey, {firstName}
               </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 1 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (user?.id) {
+                    const rootNav = navigation.getParent() as any;
+                    rootNav?.navigate('Addresses');
+                  } else {
+                    navigation.navigate('Account');
+                  }
+                }}
+                activeOpacity={0.7}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 1 }}
+              >
                 <AppIcon name="map-marker-outline" size={11} color={colors.primary} />
-                <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, flex: 1 }} numberOfLines={1}>
+                <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11 }} numberOfLines={1}>
                   {locationLabel}
                 </Text>
-              </View>
+                <AppIcon name="chevron-down" size={10} color={colors.textMuted} />
+              </TouchableOpacity>
             </View>
           </View>
           <View style={styles.topBarRight}>

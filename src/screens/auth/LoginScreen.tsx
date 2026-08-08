@@ -26,7 +26,7 @@ import { addToServerCart } from '../../services/cart';
 import type { AuthStackParamList } from '../../navigation/types';
 
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'> };
-type Step = 'phone' | 'otp' | 'choose';
+type Step = 'phone' | 'otp';
 
 export function LoginScreen({ navigation: _navigation }: Props) {
   const { theme } = useTheme();
@@ -93,6 +93,23 @@ export function LoginScreen({ navigation: _navigation }: Props) {
     finally { setLoading(false); }
   };
 
+  const handleRegister = async (accountType: 'retail' | 'b2b') => {
+    try {
+      const res = await registerWithPhone({ phone: phone.trim(), accountType });
+      const payload = (res.json as any)?.data;
+      if (res.ok && payload?.user && payload?.token) {
+        await migrateCart(payload.user.id);
+        await login(payload.user, payload.token);
+      } else {
+        setError((res.json as any).statusMessage || 'Registration failed. Please try again.');
+        otpRef.current?.reset();
+      }
+    } catch {
+      setError('Network error. Please check your connection.');
+      otpRef.current?.reset();
+    }
+  };
+
   const verifyCode = async (otp: string) => {
     setLoading(true); setError('');
     try {
@@ -101,28 +118,13 @@ export function LoginScreen({ navigation: _navigation }: Props) {
       if (res.ok && payload?.isExist && payload?.user && payload?.token) {
         await migrateCart(payload.user.id);
         await login(payload.user, payload.token);
-      } else if (res.ok && payload?.isExist === false) {
-        setStep('choose');
-      } else if (res.ok && (res.json as any).status === 200 && !payload?.isExist) {
-        setStep('choose');
+      } else if (res.ok && (payload?.isExist === false || ((res.json as any).status === 200 && !payload?.isExist))) {
+        await handleRegister('retail');
       } else {
         setError((res.json as any).statusMessage || 'Invalid OTP. Please try again.');
         otpRef.current?.reset();
       }
     } catch { setError('Network error. Please check your connection.'); otpRef.current?.reset(); }
-    finally { setLoading(false); }
-  };
-
-  const handleChooseType = async (accountType: 'retail' | 'b2b') => {
-    setLoading(true); setError('');
-    try {
-      const res = await registerWithPhone({ phone: phone.trim(), accountType });
-      const payload = (res.json as any)?.data;
-      if (res.ok && payload?.user && payload?.token) {
-        await migrateCart(payload.user.id);
-        await login(payload.user, payload.token);
-      } else { setError((res.json as any).statusMessage || 'Registration failed. Please try again.'); }
-    } catch { setError('Network error. Please check your connection.'); }
     finally { setLoading(false); }
   };
 
@@ -138,10 +140,8 @@ export function LoginScreen({ navigation: _navigation }: Props) {
     finally { setLoading(false); }
   };
 
-  const stepTitle = step === 'choose' ? 'Choose Account Type' : step === 'otp' ? 'Verify OTP' : 'Welcome Back';
-  const stepSub = step === 'choose'
-    ? 'Select how you want to shop with us.'
-    : step === 'otp'
+  const stepTitle = step === 'otp' ? 'Verify OTP' : 'Welcome Back';
+  const stepSub = step === 'otp'
     ? `Code sent to +91 ${phone}`
     : 'Sign in or create your account';
 
@@ -183,7 +183,7 @@ export function LoginScreen({ navigation: _navigation }: Props) {
             <View style={[styles.stepBadge, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '40' }]}>
               <View style={[styles.stepDot, { backgroundColor: colors.primary }]} />
               <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 1.2 }}>
-                {step === 'phone' ? 'STEP 1 OF 2' : step === 'otp' ? 'STEP 2 OF 2' : 'ALMOST DONE'}
+                {step === 'phone' ? 'STEP 1 OF 2' : 'STEP 2 OF 2'}
               </Text>
             </View>
           </View>
@@ -239,57 +239,6 @@ export function LoginScreen({ navigation: _navigation }: Props) {
                     </Text>
                   </TouchableOpacity>
                 </View>
-              </>
-            )}
-
-            {/* ── Choose type step ── */}
-            {step === 'choose' && (
-              <>
-                <View style={[styles.phoneBadge, { backgroundColor: colors.primary + '12', borderColor: colors.primary + '35', borderRadius: radius.lg }]}>
-                  <AppIcon name="phone-outline" size={14} color={colors.primary} />
-                  <Text style={{ color: colors.primary, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginLeft: 6 }}>
-                    +91 <Text style={{ fontFamily: fontFamily.sansBold }}>{phone}</Text>
-                  </Text>
-                  <TouchableOpacity onPress={() => { setStep('phone'); setError(''); otpRef.current?.reset(); }} style={{ marginLeft: 'auto' }}>
-                    <Text style={{ color: colors.primary, fontFamily: fontFamily.sans, fontSize: fontSize.xs, textDecorationLine: 'underline' }}>Change</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.typeGrid}>
-                  {(['retail', 'b2b'] as const).map(type => (
-                    <TouchableOpacity
-                      key={type}
-                      onPress={() => handleChooseType(type)}
-                      disabled={loading}
-                      activeOpacity={0.85}
-                      style={[
-                        styles.typeCard,
-                        {
-                          borderColor: type === 'retail' ? colors.primary : '#10B981',
-                          backgroundColor: colors.surfaceElevated,
-                          borderRadius: radius.xl,
-                          opacity: loading ? 0.6 : 1,
-                        },
-                      ]}
-                    >
-                      <View style={[styles.typeIconWrap, { backgroundColor: (type === 'retail' ? colors.primary : '#10B981') + '18' }]}>
-                        <AppIcon name={type === 'retail' ? 'shopping-outline' : 'storefront-outline'} color={type === 'retail' ? colors.primary : '#10B981'} size={26} />
-                      </View>
-                      <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.sm, marginTop: 10 }}>
-                        {type === 'retail' ? 'Retail' : 'Business'}
-                      </Text>
-                      <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, marginTop: 2, textAlign: 'center' }}>
-                        {type === 'retail' ? 'Personal Shopping' : 'Wholesale & B2B'}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {loading && (
-                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 12, textAlign: 'center' }}>
-                    Setting up your account...
-                  </Text>
-                )}
               </>
             )}
 

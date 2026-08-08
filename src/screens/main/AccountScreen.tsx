@@ -37,7 +37,7 @@ export function AccountScreen({ navigation }: Props) {
             <AppIcon name="account-circle-outline" color={colors.primary} size={50} />
           </View>
           <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize['2xl'], marginTop: 20, textAlign: 'center' }}>
-            Welcome to Ethnic Sparkles
+            Welcome to Ethnics Retail
           </Text>
           <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 8, textAlign: 'center', lineHeight: 22 }}>
             Sign in to access orders, wishlist, saved addresses and exclusive member benefits.
@@ -133,7 +133,7 @@ export function AccountScreen({ navigation }: Props) {
 
         {/* App version */}
         <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs, textAlign: 'center', marginTop: 24 }}>
-          Ethnic Sparkles v1.0 · EEAS Lifestyle
+          Ethnics Retail v1.0 · EEAS Lifestyle
         </Text>
 
       </ScrollView>
