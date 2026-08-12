@@ -105,7 +105,7 @@ const CategoryItem = React.memo(({ item, index, isSelected, onSelect, colors, fo
 const ProductListItem = React.memo(({ item, onPress }: { item: any; onPress: (id: number) => void }) => {
   const handlePress = useCallback(() => onPress(item.id), [onPress, item.id]);
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, maxWidth: '50%' }}>
       <ProductCard product={item} onPress={handlePress} />
     </View>
   );
@@ -119,7 +119,9 @@ const ShopSkeleton = React.memo(({ colors, spacing, radius }: any) => {
         <View
           key={key}
           style={{
-            width: '48%',
+            flex: 1,
+            minWidth: '45%',
+            maxWidth: '50%',
             height: 220,
             borderRadius: radius.xl,
             backgroundColor: colors.surfaceElevated,
@@ -324,9 +326,8 @@ export function ShopScreen({ navigation, route }: Props) {
     [selectedCatId, handleCategorySelect, colors, fontFamily],
   );
 
-  const categoryListData = useRef([{ id: 'all', name: 'All' }]);
-  useEffect(() => {
-    categoryListData.current = [{ id: 'all', name: 'All' }, ...categories];
+  const categoryListData = React.useMemo(() => {
+    return [{ id: 'all', name: 'All' }, ...categories];
   }, [categories]);
 
   const selectedCategoryObj = categories.find(c => String(c.id) === String(selectedCatId));
@@ -414,21 +415,20 @@ export function ShopScreen({ navigation, route }: Props) {
       </View>
 
       {/* ── Top Categories Carousel ── */}
-      {categories.length > 0 && (
-        <View style={{ marginBottom: 12 }}>
-          <FlatList
-            data={categoryListData.current}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: spacing[5], gap: 16 }}
-            keyExtractor={categoryKeyExtractor}
-            renderItem={renderCategoryItem}
-            initialNumToRender={8}
-            maxToRenderPerBatch={8}
-            windowSize={5}
-          />
-        </View>
-      )}
+      <View style={{ marginBottom: 12 }}>
+        <FlatList
+          data={categoryListData}
+          extraData={selectedCatId}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: spacing[5], gap: 16 }}
+          keyExtractor={categoryKeyExtractor}
+          renderItem={renderCategoryItem}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+        />
+      </View>
 
       {/* Subtle inline progress bar when refreshing / filter updating */}
       {loading && products.length > 0 && (
@@ -463,7 +463,7 @@ export function ShopScreen({ navigation, route }: Props) {
             keyExtractor={productKeyExtractor}
             renderItem={renderProductItem}
             contentContainerStyle={{ paddingHorizontal: spacing[5], paddingBottom: 100, paddingTop: 4, gap: 12 }}
-            columnWrapperStyle={{ gap: 12 }}
+            columnWrapperStyle={{ justifyContent: 'flex-start', gap: 12 }}
             showsVerticalScrollIndicator={false}
             onEndReached={handleLoadMore}
             onEndReachedThreshold={0.5}

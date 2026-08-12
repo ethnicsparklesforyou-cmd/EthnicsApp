@@ -309,47 +309,77 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
   const pan = useRef(new Animated.ValueXY()).current;
   const W_MODAL = Dimensions.get('window').width;
 
-  const handleSwipeComplete = (direction: 'left' | 'right') => {
-    const currentProduct = deckProducts[currentIndex];
+  const deckStateRef = useRef({ currentIndex, deckProducts, toggle, checkPagination });
+  useEffect(() => {
+    deckStateRef.current = { currentIndex, deckProducts, toggle, checkPagination };
+  }, [currentIndex, deckProducts, toggle, checkPagination]);
+
+  const handleSwipeComplete = useCallback((direction: 'left' | 'right') => {
+    const { currentIndex: cIdx, deckProducts: dProds, toggle: tog, checkPagination: checkPag } = deckStateRef.current;
+    const currentProduct = dProds[cIdx];
     if (direction === 'right' && currentProduct?.id) {
       const pid = currentProduct.id;
-      setTimeout(() => {
-        toggle(pid).catch(() => {});
-      }, 0);
+      tog(pid).catch(() => {});
     }
 
-    const nextIdx = currentIndex + 1;
-    setCurrentIndex(nextIdx);
-    checkPagination(nextIdx);
+    const nextIdx = cIdx + 1;
     pan.setValue({ x: 0, y: 0 });
-  };
+    setCurrentIndex(nextIdx);
+    checkPag(nextIdx);
+  }, [pan]);
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 6 || Math.abs(gestureState.dy) > 6;
+      },
       onPanResponderMove: Animated.event([
         null,
         { dx: pan.x, dy: pan.y }
       ], { useNativeDriver: false }),
       onPanResponderRelease: (e, gestureState) => {
-        if (gestureState.dx > 100) {
-          Animated.timing(pan, { toValue: { x: W_MODAL + 150, y: gestureState.dy }, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: false }).start(() => {
+        const isRightSwipe = gestureState.dx > 70 || gestureState.vx > 0.45;
+        const isLeftSwipe = gestureState.dx < -70 || gestureState.vx < -0.45;
+
+        if (isRightSwipe) {
+          Animated.timing(pan, {
+            toValue: { x: W_MODAL + 180, y: gestureState.dy },
+            duration: 180,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: false,
+          }).start(() => {
             handleSwipeComplete('right');
           });
-        } else if (gestureState.dx < -100) {
-          Animated.timing(pan, { toValue: { x: -W_MODAL - 150, y: gestureState.dy }, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: false }).start(() => {
+        } else if (isLeftSwipe) {
+          Animated.timing(pan, {
+            toValue: { x: -W_MODAL - 180, y: gestureState.dy },
+            duration: 180,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: false,
+          }).start(() => {
             handleSwipeComplete('left');
           });
         } else {
-          Animated.spring(pan, { toValue: { x: 0, y: 0 }, friction: 6, tension: 80, useNativeDriver: false }).start();
+          Animated.spring(pan, {
+            toValue: { x: 0, y: 0 },
+            friction: 7,
+            tension: 110,
+            useNativeDriver: false,
+          }).start();
         }
       },
     })
   ).current;
 
   const triggerSwipe = (direction: 'left' | 'right') => {
-    const toX = direction === 'right' ? W_MODAL + 150 : -W_MODAL - 150;
-    Animated.timing(pan, { toValue: { x: toX, y: 0 }, duration: 220, easing: Easing.out(Easing.quad), useNativeDriver: false }).start(() => {
+    const toX = direction === 'right' ? W_MODAL + 180 : -W_MODAL - 180;
+    Animated.timing(pan, {
+      toValue: { x: toX, y: 0 },
+      duration: 180,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: false,
+    }).start(() => {
       handleSwipeComplete(direction);
     });
   };
