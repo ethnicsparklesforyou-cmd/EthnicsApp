@@ -4,14 +4,14 @@ import {
   Animated,
   Easing,
   KeyboardAvoidingView,
-  Modal,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../context/ThemeContext';
 import { Button, Input, Logo, Screen } from '../../components/common';
@@ -33,6 +33,8 @@ export function LoginScreen({ navigation: _navigation }: Props) {
   const { login } = useAuth();
   const { items: guestCartItems } = useCart();
   const { colors, fontFamily, fontSize, spacing, radius } = theme;
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, 24);
 
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
@@ -160,7 +162,8 @@ export function LoginScreen({ navigation: _navigation }: Props) {
 
       {/* Bottom sheet */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         style={styles.kavWrap}
         pointerEvents="box-none"
       >
@@ -171,6 +174,8 @@ export function LoginScreen({ navigation: _navigation }: Props) {
               backgroundColor: colors.surface,
               borderTopLeftRadius: 28,
               borderTopRightRadius: 28,
+              paddingBottom: bottomInset,
+              maxHeight: '85%',
               transform: [{ translateY: slideY }],
             },
           ]}
@@ -178,86 +183,93 @@ export function LoginScreen({ navigation: _navigation }: Props) {
           {/* Handle */}
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-          {/* Step badge + close area */}
-          <View style={styles.sheetHeader}>
-            <View style={[styles.stepBadge, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '40' }]}>
-              <View style={[styles.stepDot, { backgroundColor: colors.primary }]} />
-              <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 1.2 }}>
-                {step === 'phone' ? 'STEP 1 OF 2' : 'STEP 2 OF 2'}
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            contentContainerStyle={{ flexGrow: 1 }}
+          >
+            {/* Step badge + close area */}
+            <View style={styles.sheetHeader}>
+              <View style={[styles.stepBadge, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '40' }]}>
+                <View style={[styles.stepDot, { backgroundColor: colors.primary }]} />
+                <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 1.2 }}>
+                  {step === 'phone' ? 'STEP 1 OF 2' : 'STEP 2 OF 2'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={[styles.sheetBody, { paddingHorizontal: spacing[5] }]}>
+              <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 22, marginBottom: 4 }}>
+                {stepTitle}
+              </Text>
+              <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginBottom: 24 }}>
+                {stepSub}
+              </Text>
+
+              {/* ── Phone step ── */}
+              {step === 'phone' && (
+                <>
+                  <View style={styles.phoneRow}>
+                    <View style={[styles.countryCode, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderRadius: radius.md }]}>
+                      <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>+91</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Input
+                        label="Mobile Number"
+                        value={phone}
+                        onChangeText={v => { setPhone(v); setPhoneError(''); }}
+                        keyboardType="phone-pad"
+                        maxLength={10}
+                        placeholder="10-digit mobile number"
+                        error={phoneError}
+                      />
+                    </View>
+                  </View>
+                  <Button label="Send OTP" onPress={handlePhoneSubmit} loading={loading} />
+                </>
+              )}
+
+              {/* ── OTP step ── */}
+              {step === 'otp' && (
+                <>
+                  <TouchableOpacity onPress={() => { setStep('phone'); setError(''); otpRef.current?.reset(); }} style={{ marginBottom: 20 }}>
+                    <Text style={{ color: colors.primary, fontFamily: fontFamily.sans, fontSize: fontSize.sm }}>← Change number</Text>
+                  </TouchableOpacity>
+                  <OtpInput ref={otpRef} onComplete={verifyCode} disabled={loading} />
+                  {loading && (
+                    <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 12, textAlign: 'center' }}>
+                      Verifying...
+                    </Text>
+                  )}
+                  <View style={styles.resendRow}>
+                    <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm }}>Didn't receive?{'  '}</Text>
+                    <TouchableOpacity onPress={resendOtp} disabled={resendTimer > 0 || loading}>
+                      <Text style={{ color: resendTimer > 0 ? colors.textMuted : colors.primary, fontFamily: fontFamily.sansBold, fontSize: fontSize.sm }}>
+                        {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+
+              {/* Error */}
+              {!!error && (
+                <View style={[styles.errorBox, { backgroundColor: colors.error + '12', borderColor: colors.error + '50', borderRadius: radius.lg }]}>
+                  <AppIcon name="alert-circle-outline" size={15} color={colors.error} />
+                  <Text style={{ color: colors.error, fontFamily: fontFamily.sans, fontSize: fontSize.sm, flex: 1, marginLeft: 8 }}>{error}</Text>
+                </View>
+              )}
+
+              {/* Footer */}
+              <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, textAlign: 'center', lineHeight: 17, marginTop: 20, marginBottom: 8 }}>
+                By continuing, you agree to our{' '}
+                <Text style={{ color: colors.primary }}>Terms</Text>
+                {' '}and{' '}
+                <Text style={{ color: colors.primary }}>Privacy Policy</Text>.
               </Text>
             </View>
-          </View>
-
-          <View style={[styles.sheetBody, { paddingHorizontal: spacing[5] }]}>
-            <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 22, marginBottom: 4 }}>
-              {stepTitle}
-            </Text>
-            <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginBottom: 24 }}>
-              {stepSub}
-            </Text>
-
-            {/* ── Phone step ── */}
-            {step === 'phone' && (
-              <>
-                <View style={styles.phoneRow}>
-                  <View style={[styles.countryCode, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderRadius: radius.md }]}>
-                    <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>+91</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Input
-                      label="Mobile Number"
-                      value={phone}
-                      onChangeText={v => { setPhone(v); setPhoneError(''); }}
-                      keyboardType="phone-pad"
-                      maxLength={10}
-                      placeholder="10-digit mobile number"
-                      error={phoneError}
-                    />
-                  </View>
-                </View>
-                <Button label="Send OTP" onPress={handlePhoneSubmit} loading={loading} />
-              </>
-            )}
-
-            {/* ── OTP step ── */}
-            {step === 'otp' && (
-              <>
-                <TouchableOpacity onPress={() => { setStep('phone'); setError(''); otpRef.current?.reset(); }} style={{ marginBottom: 20 }}>
-                  <Text style={{ color: colors.primary, fontFamily: fontFamily.sans, fontSize: fontSize.sm }}>← Change number</Text>
-                </TouchableOpacity>
-                <OtpInput ref={otpRef} onComplete={verifyCode} disabled={loading} />
-                {loading && (
-                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 12, textAlign: 'center' }}>
-                    Verifying...
-                  </Text>
-                )}
-                <View style={styles.resendRow}>
-                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm }}>Didn't receive?{'  '}</Text>
-                  <TouchableOpacity onPress={resendOtp} disabled={resendTimer > 0 || loading}>
-                    <Text style={{ color: resendTimer > 0 ? colors.textMuted : colors.primary, fontFamily: fontFamily.sansBold, fontSize: fontSize.sm }}>
-                      {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-
-            {/* Error */}
-            {!!error && (
-              <View style={[styles.errorBox, { backgroundColor: colors.error + '12', borderColor: colors.error + '50', borderRadius: radius.lg }]}>
-                <AppIcon name="alert-circle-outline" size={15} color={colors.error} />
-                <Text style={{ color: colors.error, fontFamily: fontFamily.sans, fontSize: fontSize.sm, flex: 1, marginLeft: 8 }}>{error}</Text>
-              </View>
-            )}
-
-            {/* Footer */}
-            <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, textAlign: 'center', lineHeight: 17, marginTop: 20, marginBottom: 8 }}>
-              By continuing, you agree to our{' '}
-              <Text style={{ color: colors.primary }}>Terms</Text>
-              {' '}and{' '}
-              <Text style={{ color: colors.primary }}>Privacy Policy</Text>.
-            </Text>
-          </View>
+          </ScrollView>
         </Animated.View>
       </KeyboardAvoidingView>
     </Screen>

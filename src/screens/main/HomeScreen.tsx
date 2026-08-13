@@ -1,5 +1,4 @@
-/* eslint-disable react-native/no-inline-styles */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, startTransition } from 'react';
 import {
   Alert,
   Animated,
@@ -32,7 +31,9 @@ import { useWishlist } from '../../context/WishlistContext';
 import { fetchActiveBanners, fetchCategories, fetchProducts } from '../../services/products';
 import { fetchAddresses } from '../../services/address';
 import { getBannerImageUrl } from '../../utils/imageUtils';
-import { AppIcon } from '../../components/common';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppIcon, LocationSelectModal } from '../../components/common';
+import { LOCATION_STORAGE_KEY } from '../../components/common/LocationSelectModal';
 import { useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { TabParamList } from '../../navigation/types';
@@ -909,51 +910,99 @@ export function HomeScreen({ navigation }: Props) {
     }
   }
   const [locationLabel, setLocationLabel] = useState('Fetching location...');
-  const themeRotation = useRef(new Animated.Value(0)).current;
+  const [locationModalVisible, setLocationModalVisible] = useState(false);
+  const thumbPos = useRef(new Animated.Value(isDark ? 24 : 0)).current;
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.spring(thumbPos, {
+      toValue: isDark ? 24 : 0,
+      friction: 7,
+      tension: 90,
+      useNativeDriver: true,
+    }).start();
+  }, [isDark, thumbPos]);
+
   const handleThemeToggle = useCallback(() => {
-    Animated.timing(themeRotation, { toValue: isDark ? 0 : 1, duration: 300, useNativeDriver: true }).start();
-    setMode(isDark ? 'light' : 'dark');
-  }, [isDark, setMode, themeRotation]);
+    const nextIsDark = !isDark;
+
+    Animated.parallel([
+      Animated.spring(thumbPos, {
+        toValue: nextIsDark ? 24 : 0,
+        friction: 7,
+        tension: 90,
+        useNativeDriver: true,
+      }),
+      Animated.sequence([
+        Animated.timing(pressScale, { toValue: 0.88, duration: 80, useNativeDriver: true }),
+        Animated.timing(pressScale, { toValue: 1, duration: 120, useNativeDriver: true }),
+      ]),
+    ]).start();
+
+    requestAnimationFrame(() => {
+      startTransition(() => {
+        setMode(nextIsDark ? 'dark' : 'light');
+      });
+    });
+  }, [isDark, setMode, thumbPos, pressScale]);
 
   const loadUserLocation = useCallback(() => {
-    if (!user?.id) {
-      setLocationLabel('Select Location');
-      return;
-    }
-    fetchAddresses(user.id)
-      .then((res: any) => {
-        const list = res?.data?.data ?? res?.data ?? res?.result?.data ?? res?.result ?? [];
-        const addressList = Array.isArray(list) ? list : [];
-        const primary = addressList.find((a: any) => a.isDefault || a.is_default || String(a.isDefault) === '1') ?? addressList[0];
+    AsyncStorage.getItem(LOCATION_STORAGE_KEY).then(raw => {
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed?.label) {
+            setLocationLabel(parsed.label);
+            return;
+          }
+        } catch {}
+      }
 
-        if (!primary) {
-          setLocationLabel('Select Location');
-          return;
-        }
-
-        const city = (primary?.cityName || primary?.city || '').trim();
-        const state = (primary?.stateName || primary?.state_name || primary?.state || '').trim();
-        const postalCode = String(primary?.postal_code || primary?.pincode || primary?.zipCode || '').trim();
-
-        const cleanCity = city && city !== 'undefined' && city !== 'null' ? city : null;
-        const cleanState = state && state !== 'undefined' && state !== 'null' ? state : null;
-        const cleanPostal = postalCode && postalCode !== 'undefined' && postalCode !== 'null' ? postalCode : null;
-
-        if (cleanCity && cleanState) {
-          setLocationLabel(`${cleanCity}, ${cleanState}`);
-        } else if (cleanCity && cleanPostal) {
-          setLocationLabel(`${cleanCity} - ${cleanPostal}`);
-        } else if (cleanCity) {
-          setLocationLabel(cleanCity);
-        } else if (cleanPostal) {
-          setLocationLabel(`PIN ${cleanPostal}`);
-        } else {
-          setLocationLabel('Select Location');
-        }
-      })
-      .catch(() => {
+      if (!user?.id) {
         setLocationLabel('Select Location');
-      });
+        return;
+      }
+      fetchAddresses(user.id)
+        .then((res: any) => {
+          const list = res?.data?.data ?? res?.data ?? res?.result?.data ?? res?.result ?? [];
+          const addressList = Array.isArray(list) ? list : [];
+          const primary = addressList.find((a: any) => a.isDefault || a.is_default || String(a.isDefault) === '1') ?? addressList[0];
+
+          if (!primary) {
+            setLocationLabel('Select Location');
+            return;
+          }
+
+          const line1 = (primary?.line1 || primary?.addressLine1 || primary?.address_line1 || '').trim();
+          const city = (primary?.cityName || primary?.city || '').trim();
+          const state = (primary?.stateName || primary?.state_name || primary?.state || '').trim();
+          const postalCode = String(primary?.postal_code || primary?.pincode || primary?.zipCode || '').trim();
+
+          const cleanLine1 = line1 && line1 !== 'undefined' && line1 !== 'null' ? line1 : null;
+          const cleanCity = city && city !== 'undefined' && city !== 'null' ? city : null;
+          const cleanState = state && state !== 'undefined' && state !== 'null' ? state : null;
+          const cleanPostal = postalCode && postalCode !== 'undefined' && postalCode !== 'null' ? postalCode : null;
+
+          if (cleanLine1 && cleanCity) {
+            setLocationLabel(`${cleanLine1}, ${cleanCity}`);
+          } else if (cleanLine1 && cleanPostal) {
+            setLocationLabel(`${cleanLine1}, ${cleanPostal}`);
+          } else if (cleanCity && cleanState) {
+            setLocationLabel(`${cleanCity}, ${cleanState}`);
+          } else if (cleanCity && cleanPostal) {
+            setLocationLabel(`${cleanCity} - ${cleanPostal}`);
+          } else if (cleanCity) {
+            setLocationLabel(cleanCity);
+          } else if (cleanPostal) {
+            setLocationLabel(`PIN ${cleanPostal}`);
+          } else {
+            setLocationLabel('Select Location');
+          }
+        })
+        .catch(() => {
+          setLocationLabel('Select Location');
+        });
+    });
   }, [user]);
 
   useFocusEffect(
@@ -1161,19 +1210,12 @@ export function HomeScreen({ navigation }: Props) {
                 Hey, {firstName}
               </Text>
               <TouchableOpacity
-                onPress={() => {
-                  if (user?.id) {
-                    const rootNav = navigation.getParent() as any;
-                    rootNav?.navigate('Addresses');
-                  } else {
-                    navigation.navigate('Account');
-                  }
-                }}
+                onPress={() => setLocationModalVisible(true)}
                 activeOpacity={0.7}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 1 }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 1, maxWidth: 190 }}
               >
                 <AppIcon name="map-marker-outline" size={11} color={colors.primary} />
-                <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11 }} numberOfLines={1}>
+                <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, flexShrink: 1 }} numberOfLines={1}>
                   {locationLabel}
                 </Text>
                 <AppIcon name="chevron-down" size={10} color={colors.textMuted} />
@@ -1181,9 +1223,46 @@ export function HomeScreen({ navigation }: Props) {
             </View>
           </View>
           <View style={styles.topBarRight}>
-            <Animated.View style={{ transform: [{ rotate: themeRotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }}>
-              <TouchableOpacity onPress={handleThemeToggle} style={[styles.topIconBtn, { backgroundColor: 'rgba(255,255,255,0.4)', borderColor: 'rgba(0,0,0,0.05)' }]} activeOpacity={0.7}>
-                <AppIcon name={isDark ? 'white-balance-sunny' : 'moon-waning-crescent'} size={18} color={isDark ? colors.primary : '#B8860B'} />
+            <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+              <TouchableOpacity
+                onPress={handleThemeToggle}
+                activeOpacity={0.9}
+                style={[
+                  styles.themeCapsule,
+                  {
+                    backgroundColor: isDark ? 'rgba(28, 22, 42, 0.9)' : 'rgba(240, 238, 246, 0.9)',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
+                  },
+                ]}
+              >
+                <Animated.View
+                  style={[
+                    styles.themeThumb,
+                    {
+                      backgroundColor: isDark ? '#2E274C' : '#FFFFFF',
+                      transform: [{ translateX: thumbPos }],
+                      shadowColor: isDark ? '#A5B4FC' : '#F59E0B',
+                      shadowOpacity: isDark ? 0.35 : 0.25,
+                      shadowRadius: 5,
+                      shadowOffset: { width: 0, height: 1.5 },
+                      elevation: 3,
+                    },
+                  ]}
+                >
+                  <AppIcon
+                    name={isDark ? 'weather-night' : 'weather-sunny'}
+                    size={13}
+                    color={isDark ? '#C7D2FE' : '#F59E0B'}
+                  />
+                </Animated.View>
+                <View style={styles.themeCapsuleIcons}>
+                  <View style={styles.themeIconSlot}>
+                    <AppIcon name="weather-sunny" size={11} color={isDark ? 'rgba(255,255,255,0.35)' : 'transparent'} />
+                  </View>
+                  <View style={styles.themeIconSlot}>
+                    <AppIcon name="weather-night" size={11} color={isDark ? 'transparent' : 'rgba(0,0,0,0.35)'} />
+                  </View>
+                </View>
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -1611,6 +1690,22 @@ export function HomeScreen({ navigation }: Props) {
           <AppIcon name="heart-outline" size={20} color="#FFF" />
         </TouchableOpacity>
       </View>
+
+      {/* ── Location Selector Modal ── */}
+      <LocationSelectModal
+        visible={locationModalVisible}
+        onClose={() => setLocationModalVisible(false)}
+        onSelectLocation={label => setLocationLabel(label)}
+        onAddNewAddress={() => {
+          setLocationModalVisible(false);
+          if (user?.id) {
+            const rootNav = navigation.getParent() as any;
+            rootNav?.navigate('Addresses');
+          } else {
+            navigation.navigate('Account');
+          }
+        }}
+      />
     </View>
   );
 }
@@ -1669,6 +1764,41 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  themeCapsule: {
+    width: 52,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 1,
+    position: 'relative',
+  },
+  themeThumb: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  themeCapsuleIcons: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 5,
+    zIndex: 1,
+  },
+  themeIconSlot: {
+    width: 18,
+    height: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },

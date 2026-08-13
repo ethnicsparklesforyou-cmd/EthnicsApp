@@ -18,16 +18,19 @@ import { OrderDetailScreen } from '../screens/main/OrderDetailScreen';
 import { useCart } from '../context/CartContext';
 import { useTheme } from '../context/ThemeContext';
 import { AppIcon } from '../components/common';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { MainStackParamList, TabParamList } from './types';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const Stack = createNativeStackNavigator<MainStackParamList>();
 
-const TAB_H = Platform.OS === 'ios' ? 80 : 64;
 function HomeTabs() {
   const { totalItems } = useCart();
   const { theme } = useTheme();
   const { colors } = theme;
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Platform.OS === 'ios' ? Math.max(insets.bottom, 20) : Math.max(insets.bottom, 8);
+  const tabBarHeight = 56 + bottomPadding;
 
   return (
     <Tab.Navigator
@@ -38,8 +41,8 @@ function HomeTabs() {
           backgroundColor: colors.tabBar,
           borderTopColor: colors.border,
           borderTopWidth: 0.5,
-          height: TAB_H,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          height: tabBarHeight,
+          paddingBottom: bottomPadding,
           paddingTop: 8,
           elevation: 16,
           shadowColor: '#6B5040',

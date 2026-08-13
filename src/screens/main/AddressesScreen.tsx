@@ -87,6 +87,19 @@ export function AddressesScreen({ navigation }: Props) {
     setShowForm(true);
   };
 
+  const handleSetDefault = async (address: any) => {
+    setLoading(true);
+    try {
+      await updateAddress(address.id, { ...address, isDefault: true, userId: user.id });
+      await refresh();
+      show({ type: 'success', title: 'Default Updated', message: 'Set as default delivery address.' });
+    } catch {
+      show({ type: 'error', title: 'Update Failed', message: 'Failed to set default address.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = (id: number) => {
     show({
       type: 'confirm',
@@ -222,6 +235,15 @@ export function AddressesScreen({ navigation }: Props) {
                   </Text>
 
                   <View style={[styles.addrActions, { borderTopColor: colors.border }]}>
+                    {!item.isDefault && (
+                      <>
+                        <TouchableOpacity onPress={() => handleSetDefault(item)} style={styles.actionBtn}>
+                          <AppIcon name="check-circle-outline" color={colors.primary} size={14} />
+                          <Text style={{ color: colors.primary, fontFamily: fontFamily.sansMedium, fontSize: fontSize.sm }}>Make Default</Text>
+                        </TouchableOpacity>
+                        <View style={{ width: StyleSheet.hairlineWidth, backgroundColor: colors.border }} />
+                      </>
+                    )}
                     <TouchableOpacity onPress={() => startEdit(item)} style={styles.actionBtn}>
                       <AppIcon name="pencil-outline" color={colors.primary} size={14} />
                       <Text style={{ color: colors.primary, fontFamily: fontFamily.sansMedium, fontSize: fontSize.sm }}>Edit</Text>

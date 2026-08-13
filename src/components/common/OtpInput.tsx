@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 
 interface OtpInputProps {
@@ -27,7 +27,9 @@ export const OtpInput = forwardRef<OtpInputHandle, OtpInputProps>(
     }));
 
     const focusInput = () => {
-      if (!disabled) requestAnimationFrame(() => inputRef.current?.focus());
+      if (!disabled) {
+        inputRef.current?.focus();
+      }
     };
 
     const handleChange = (text: string) => {
@@ -55,9 +57,9 @@ export const OtpInput = forwardRef<OtpInputHandle, OtpInputProps>(
           ref={inputRef}
           value={values.join('')}
           onChangeText={handleChange}
-          keyboardType="number-pad"
+          keyboardType={Platform.OS === 'ios' ? 'number-pad' : 'numeric'}
           maxLength={length}
-          autoComplete="one-time-code"
+          autoComplete={Platform.OS === 'android' ? 'sms-otp' : 'one-time-code'}
           textContentType="oneTimeCode"
           importantForAutofill="yes"
           autoCapitalize="none"
@@ -99,9 +101,15 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10, justifyContent: 'center', position: 'relative' },
   hiddenInput: {
     position: 'absolute',
-    opacity: 0,
-    width: 1,
-    height: 1,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.01,
+    color: 'transparent',
+    backgroundColor: 'transparent',
+    fontSize: 1,
+    zIndex: 10,
   },
   box: {
     width: 48,
