@@ -1,0 +1,145 @@
+name: iOS Build & Deploy to App Store Connect
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-and-upload:
+    name: Build & Upload to App Store
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Select Xcode 26 (iOS 26 SDK - required by Apple App Store Connect since Aug 2026)
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.0.1.app/Contents/Developer
+          xcodebuild -version
+          xcrun simctl list runtimes 2>/dev/null | grep iOS | head -5 || true
+
+      - name: Setup CocoaPods Cache
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      - name: Install Pods
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Validate & Reconstruct App Store Connect API Key
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY || secrets.APP_STORE_CONNECT_PRIVATE_KEY || secrets.APP_STORE_CONNECT_KEY || secrets.P8_KEY }}
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          python3 -c "
+          import os, sys, base64, textwrap
+
+          raw = os.environ.get('APP_STORE_CONNECT_API_KEY', '').strip()
+          key_id = os.environ.get('KEY_ID', '').strip()
+          issuer_id = os.environ.get('ISSUER_ID', '').strip()
+
+          if not key_id:
+              print('❌ ERROR: APP_STORE_CONNECT_KEY_ID missing')
+              sys.exit(1)
+          if not issuer_id:
+              print('❌ ERROR: APP_STORE_CONNECT_ISSUER_ID missing')
+              sys.exit(1)
+          if not raw:
+              print('❌ ERROR: APP_STORE_CONNECT_API_KEY missing')
+              sys.exit(1)
+
+          try:
+              decoded = base64.b64decode(raw).decode('utf-8', errors='ignore')
+              if 'PRIVATE KEY' in decoded:
+                  raw = decoded
+          except Exception:
+              pass
+
+          clean = raw.replace('-----BEGIN PRIVATE KEY-----', '').replace('-----END PRIVATE KEY-----', '')
+          clean = ''.join(clean.split())
+
+          try:
+              der = base64.b64decode(clean)
+              if len(der) < 100:
+                  print('❌ ERROR: Key is truncated')
+                  sys.exit(1)
+          except Exception as e:
+              print(f'❌ ERROR: {e}')
+              sys.exit(1)
+
+          wrapped = '\n'.join(textwrap.wrap(clean, 64))
+          pem = f'-----BEGIN PRIVATE KEY-----\n{wrapped}\n-----END PRIVATE KEY-----\n'
+          path = os.path.expanduser(f'~/.appstoreconnect/private_keys/AuthKey_{key_id}.p8')
+          with open(path, 'w') as f:
+              f.write(pem)
+          print(f'✅ AuthKey_{key_id}.p8 written ({len(pem)} bytes)')
+          "
+
+      - name: Build Archive
+        run: |
+          cd ios
+          xcodebuild -workspace JwelleryApp.xcworkspace \
+                     -scheme JwelleryApp \
+                     -sdk iphoneos \
+                     -destination "generic/platform=iOS" \
+                     -configuration Release \
+                     -archivePath $RUNNER_TEMP/JwelleryApp.xcarchive \
+                     CODE_SIGNING_ALLOWED=NO \
+                     archive
+
+      - name: Export IPA & App Store Sign
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${KEY_ID}.p8"
+          cd ios
+          xcodebuild -exportArchive \
+                     -archivePath $RUNNER_TEMP/JwelleryApp.xcarchive \
+                     -exportOptionsPlist ExportOptions.plist \
+                     -exportPath $RUNNER_TEMP/build \
+                     -allowProvisioningUpdates \
+                     -authenticationKeyPath "$KEY_PATH" \
+                     -authenticationKeyID "$KEY_ID" \
+                     -authenticationKeyIssuerID "$ISSUER_ID"
+
+      - name: Save Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-app-bundle
+          path: ${{ runner.temp }}/build/*.ipa
+          if-no-files-found: warn
+
+      - name: Upload to App Store Connect via xcrun altool
+        env:
+          KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          IPA_FILE=$(ls $RUNNER_TEMP/build/*.ipa 2>/dev/null | head -n 1)
+          echo "Found IPA: $IPA_FILE"
+          echo "Uploading to App Store Connect via xcrun altool..."
+
+          xcrun altool --upload-app \
+            -f "$IPA_FILE" \
+            -t ios \
+            --apiKey "$KEY_ID" \
+            --apiIssuer "$ISSUER_ID"
