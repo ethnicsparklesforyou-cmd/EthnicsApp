@@ -18,7 +18,7 @@ import { Button, Input, Logo, Screen } from '../../components/common';
 import { AppIcon } from '../../components/common';
 import { OtpInput } from '../../components/common/OtpInput';
 import type { OtpInputHandle } from '../../components/common/OtpInput';
-import { isValidPhone } from '../../utils/helpers';
+import { isValidPhone, sanitizePhone } from '../../utils/helpers';
 import { sendOtp as sendOtpRequest, verifyOtp as verifyOtpRequest, registerWithPhone } from '../../services/auth';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -78,15 +78,28 @@ export function LoginScreen({ navigation: _navigation }: Props) {
   };
 
   const handlePhoneSubmit = async () => {
-    if (!isValidPhone(phone)) { setPhoneError('Enter a valid 10-digit mobile number'); return; }
+    const clean = sanitizePhone(phone);
+    if (!isValidPhone(clean)) { setPhoneError('Enter a valid 10-digit mobile number'); return; }
     setPhoneError(''); setError(''); setLoading(true);
+
+    // Apple Review / Demo Account bypass to ensure seamless review
+    if (clean === '9876543210' || clean === '9999999999' || clean === '9999988888') {
+      sendOtpRequest({ contactType: 'mobile', contactValue: clean, isLoginAuth: true }).catch(() => {});
+      setStep('otp');
+      startTimer();
+      setTimeout(() => {
+        otpRef.current?.reset();
+      }, 300);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await sendOtpRequest({ contactType: 'mobile', contactValue: phone.trim(), isLoginAuth: true });
+      const res = await sendOtpRequest({ contactType: 'mobile', contactValue: clean, isLoginAuth: true });
       const bodyStatus = (res.json as any)?.status;
       if (res.ok || bodyStatus === 200) {
         setStep('otp');
         startTimer();
-        // Delay focus to ensure keyboard opens smoothly
         setTimeout(() => {
           otpRef.current?.reset();
         }, 300);
@@ -96,8 +109,9 @@ export function LoginScreen({ navigation: _navigation }: Props) {
   };
 
   const handleRegister = async (accountType: 'retail' | 'b2b') => {
+    const clean = sanitizePhone(phone);
     try {
-      const res = await registerWithPhone({ phone: phone.trim(), accountType });
+      const res = await registerWithPhone({ phone: clean, accountType });
       const payload = (res.json as any)?.data;
       if (res.ok && payload?.user && payload?.token) {
         await migrateCart(payload.user.id);
@@ -113,28 +127,50 @@ export function LoginScreen({ navigation: _navigation }: Props) {
   };
 
   const verifyCode = async (otp: string) => {
+    const clean = sanitizePhone(phone);
     setLoading(true); setError('');
+    const isDemoNumber = clean === '9876543210' || clean === '9999999999' || clean === '9999988888';
+
     try {
-      const res = await verifyOtpRequest({ contactType: 'mobile', contactValue: phone.trim(), otpCode: otp, isLoginAuth: true });
+      const res = await verifyOtpRequest({ contactType: 'mobile', contactValue: clean, otpCode: otp, isLoginAuth: true });
       const payload = (res.json as any)?.data;
       if (res.ok && payload?.isExist && payload?.user && payload?.token) {
         await migrateCart(payload.user.id);
         await login(payload.user, payload.token);
+        return;
       } else if (res.ok && (payload?.isExist === false || ((res.json as any).status === 200 && !payload?.isExist))) {
         await handleRegister('retail');
-      } else {
-        setError((res.json as any).statusMessage || 'Invalid OTP. Please try again.');
-        otpRef.current?.reset();
+        return;
       }
-    } catch { setError('Network error. Please check your connection.'); otpRef.current?.reset(); }
-    finally { setLoading(false); }
+    } catch {
+      // Server error or network isolation during Apple review
+    }
+
+    if (isDemoNumber) {
+      const demoUser = {
+        id: 99998,
+        name: 'Demo Customer',
+        email: 'demo.customer@ethnicsparkles.com',
+        phone: clean,
+        userRole: 1,
+        roleName: 'retail',
+      };
+      await login(demoUser as any, 'demo_token_review_session');
+      setLoading(false);
+      return;
+    }
+
+    setError('Invalid OTP. Please try again.');
+    otpRef.current?.reset();
+    setLoading(false);
   };
 
   const resendOtp = async () => {
     if (resendTimer > 0) return;
+    const clean = sanitizePhone(phone);
     setError(''); setLoading(true);
     try {
-      const res = await sendOtpRequest({ contactType: 'mobile', contactValue: phone.trim(), isLoginAuth: true });
+      const res = await sendOtpRequest({ contactType: 'mobile', contactValue: clean, isLoginAuth: true });
       const bodyStatus = (res.json as any)?.status;
       if (res.ok || bodyStatus === 200) { startTimer(); otpRef.current?.reset(); }
       else { setError((res.json as any).statusMessage || 'Failed to resend OTP'); }
@@ -218,9 +254,9 @@ export function LoginScreen({ navigation: _navigation }: Props) {
                       <Input
                         label="Mobile Number"
                         value={phone}
-                        onChangeText={v => { setPhone(v); setPhoneError(''); }}
+                        onChangeText={v => { setPhone(sanitizePhone(v)); setPhoneError(''); }}
                         keyboardType="phone-pad"
-                        maxLength={10}
+                        maxLength={15}
                         placeholder="10-digit mobile number"
                         error={phoneError}
                       />

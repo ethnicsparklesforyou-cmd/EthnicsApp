@@ -1,6 +1,18 @@
-// ─── Validation ──────────────────────────────────────────────────────────────
+export const sanitizePhone = (phone: string) => {
+  if (!phone) return '';
+  let digits = phone.replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) {
+    digits = digits.slice(2);
+  } else if (digits.length === 11 && digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+  return digits.slice(0, 10);
+};
 
-export const isValidPhone = (phone: string) => /^[6-9]\d{9}$/.test(phone.trim());
+export const isValidPhone = (phone: string) => {
+  const cleaned = sanitizePhone(phone);
+  return /^[6-9]\d{9}$/.test(cleaned);
+};
 
 export const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
