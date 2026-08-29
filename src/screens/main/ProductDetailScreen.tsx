@@ -96,7 +96,11 @@ export function ProductDetailScreen({ navigation, route }: Props) {
 
   const handleBuyNow = () => {
     addCurrentProduct();
-    navigation.navigate('Checkout');
+    if (!isAuthenticated) {
+      navigation.getParent()?.navigate('Auth' as never);
+    } else {
+      navigation.navigate('Checkout');
+    }
   };
 
   if (loading) {

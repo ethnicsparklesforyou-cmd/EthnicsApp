@@ -26,7 +26,30 @@ export function OrdersScreen({ navigation }: Props) {
       .finally(() => setLoading(false));
   }, [user?.id]);
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <Screen style={{ backgroundColor: colors.background }}>
+        <PageHeader title="My Orders" onBack={() => navigation.goBack()} />
+        <View style={styles.center}>
+          <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceElevated, borderRadius: 40 }]}>
+            <AppIcon name="account-circle-outline" color={colors.primary} size={38} />
+          </View>
+          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.xl, marginTop: 20 }}>
+            Sign In Required
+          </Text>
+          <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 6, textAlign: 'center', lineHeight: 20, paddingHorizontal: 32 }}>
+            Please sign in to view your past orders and track current shipments.
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.getParent()?.navigate('Auth' as never)}
+            style={[styles.shopBtn, { backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 24 }]}
+          >
+            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+          </TouchableOpacity>
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen style={{ backgroundColor: colors.background }}>

@@ -539,6 +539,28 @@ export function CheckoutScreen({ navigation }: Props) {
   const B2B_MIN_ORDER = 3000;
   const isB2bBelowMinOrder = isB2bUser && subtotal < B2B_MIN_ORDER;
 
+  if (!user) {
+    return (
+      <Screen>
+        <PageHeader title="Checkout" onBack={() => navigation.goBack()} />
+        <View style={styles.center}>
+          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.xl, marginTop: 12 }}>
+            Sign In Required
+          </Text>
+          <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 6, textAlign: 'center', paddingHorizontal: 32 }}>
+            Please sign in to proceed with checkout and place your order.
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.getParent()?.navigate('Auth' as never)}
+            style={{ backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 24, paddingHorizontal: 36, paddingVertical: 14 }}
+          >
+            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+          </TouchableOpacity>
+        </View>
+      </Screen>
+    );
+  }
+
   if (loading) {
     return <Screen><View style={styles.center}><ActivityIndicator color={colors.primary} size="large" /></View></Screen>;
   }

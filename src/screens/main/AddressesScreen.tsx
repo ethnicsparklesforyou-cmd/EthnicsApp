@@ -46,7 +46,30 @@ export function AddressesScreen({ navigation }: Props) {
     });
   }, [user]);
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <Screen style={{ backgroundColor: colors.background }}>
+        <PageHeader title="Saved Addresses" onBack={() => navigation.goBack()} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' }}>
+            <AppIcon name="map-marker-outline" color={colors.primary} size={38} />
+          </View>
+          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.xl, marginTop: 20 }}>
+            Sign In Required
+          </Text>
+          <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 6, textAlign: 'center', lineHeight: 20 }}>
+            Please sign in to view, add, or manage your delivery addresses.
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.getParent()?.navigate('Auth' as never)}
+            style={{ backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 24, paddingHorizontal: 32, paddingVertical: 14 }}
+          >
+            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+          </TouchableOpacity>
+        </View>
+      </Screen>
+    );
+  }
 
   const resetForm = () => {
     setForm({ Addtype: '1', line1: '', line2: '', cityName: '', stateId: '', postal_code: '' });

@@ -94,6 +94,27 @@ export function OrderDetailScreen({ navigation, route }: Props) {
     }
   };
 
+  if (!user) {
+    return (
+      <Screen style={{ backgroundColor: colors.background }}>
+        <View style={styles.center}>
+          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.lg }}>
+            Sign In Required
+          </Text>
+          <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 6, textAlign: 'center' }}>
+            Please sign in to view order details.
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.getParent()?.navigate('Auth' as never)}
+            style={{ backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 20, paddingHorizontal: 28, paddingVertical: 12 }}
+          >
+            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+          </TouchableOpacity>
+        </View>
+      </Screen>
+    );
+  }
+
   if (loading) {
     return (
       <Screen style={{ backgroundColor: colors.background }}>

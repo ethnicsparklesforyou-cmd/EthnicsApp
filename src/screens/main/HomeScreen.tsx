@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, startTransition } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import {
   Alert,
   Animated,
@@ -307,56 +307,85 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
     }
   }, [deckProducts.length]);
 
+  const isSwipingRef = useRef(false);
   const pan = useRef(new Animated.ValueXY()).current;
   const W_MODAL = Dimensions.get('window').width;
 
-  const deckStateRef = useRef({ currentIndex, deckProducts, toggle, checkPagination });
+  const deckStateRef = useRef({ currentIndex, deckProducts, toggle, checkPagination, onClose, goProduct });
   useEffect(() => {
-    deckStateRef.current = { currentIndex, deckProducts, toggle, checkPagination };
-  }, [currentIndex, deckProducts, toggle, checkPagination]);
+    deckStateRef.current = { currentIndex, deckProducts, toggle, checkPagination, onClose, goProduct };
+  }, [currentIndex, deckProducts, toggle, checkPagination, onClose, goProduct]);
 
   const handleSwipeComplete = useCallback((direction: 'left' | 'right') => {
     const { currentIndex: cIdx, deckProducts: dProds, toggle: tog, checkPagination: checkPag } = deckStateRef.current;
     const currentProduct = dProds[cIdx];
     if (direction === 'right' && currentProduct?.id) {
-      const pid = currentProduct.id;
-      tog(pid).catch(() => {});
+      tog(currentProduct.id).catch(() => {});
     }
 
     const nextIdx = cIdx + 1;
     pan.setValue({ x: 0, y: 0 });
     setCurrentIndex(nextIdx);
     checkPag(nextIdx);
+    isSwipingRef.current = false;
   }, [pan]);
 
-  const panResponder = useRef(
+  const triggerSwipe = useCallback((direction: 'left' | 'right') => {
+    if (isSwipingRef.current) return;
+    const { currentIndex: cIdx, deckProducts: dProds } = deckStateRef.current;
+    if (cIdx >= dProds.length) return;
+    isSwipingRef.current = true;
+
+    const toX = direction === 'right' ? W_MODAL * 1.5 : -W_MODAL * 1.5;
+    Animated.timing(pan, {
+      toValue: { x: toX, y: 0 },
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(() => {
+      handleSwipeComplete(direction);
+    });
+  }, [W_MODAL, handleSwipeComplete, pan]);
+
+  const panResponder = useMemo(() =>
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 6 || Math.abs(gestureState.dy) > 6;
+        return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
       },
-      onPanResponderMove: Animated.event([
-        null,
-        { dx: pan.x, dy: pan.y }
-      ], { useNativeDriver: false }),
-      onPanResponderRelease: (e, gestureState) => {
-        const isRightSwipe = gestureState.dx > 70 || gestureState.vx > 0.45;
-        const isLeftSwipe = gestureState.dx < -70 || gestureState.vx < -0.45;
+      onMoveShouldSetPanResponderCapture: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
+      },
+      onPanResponderGrant: () => {
+        if (isSwipingRef.current) return;
+        pan.setValue({ x: 0, y: 0 });
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (isSwipingRef.current) return;
+        pan.setValue({ x: gestureState.dx, y: gestureState.dy });
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (isSwipingRef.current) return;
+        const isRightSwipe = gestureState.dx > 65 || gestureState.vx > 0.35;
+        const isLeftSwipe = gestureState.dx < -65 || gestureState.vx < -0.35;
 
         if (isRightSwipe) {
+          isSwipingRef.current = true;
           Animated.timing(pan, {
-            toValue: { x: W_MODAL + 180, y: gestureState.dy },
-            duration: 180,
-            easing: Easing.out(Easing.quad),
+            toValue: { x: W_MODAL * 1.5, y: gestureState.dy },
+            duration: 200,
+            easing: Easing.out(Easing.cubic),
             useNativeDriver: false,
           }).start(() => {
             handleSwipeComplete('right');
           });
         } else if (isLeftSwipe) {
+          isSwipingRef.current = true;
           Animated.timing(pan, {
-            toValue: { x: -W_MODAL - 180, y: gestureState.dy },
-            duration: 180,
-            easing: Easing.out(Easing.quad),
+            toValue: { x: -W_MODAL * 1.5, y: gestureState.dy },
+            duration: 200,
+            easing: Easing.out(Easing.cubic),
             useNativeDriver: false,
           }).start(() => {
             handleSwipeComplete('left');
@@ -364,26 +393,25 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
         } else {
           Animated.spring(pan, {
             toValue: { x: 0, y: 0 },
-            friction: 7,
-            tension: 110,
+            friction: 6,
+            tension: 80,
             useNativeDriver: false,
           }).start();
         }
       },
-    })
-  ).current;
-
-  const triggerSwipe = (direction: 'left' | 'right') => {
-    const toX = direction === 'right' ? W_MODAL + 180 : -W_MODAL - 180;
-    Animated.timing(pan, {
-      toValue: { x: toX, y: 0 },
-      duration: 180,
-      easing: Easing.out(Easing.quad),
-      useNativeDriver: false,
-    }).start(() => {
-      handleSwipeComplete(direction);
-    });
-  };
+      onPanResponderTerminate: () => {
+        if (!isSwipingRef.current) {
+          Animated.spring(pan, {
+            toValue: { x: 0, y: 0 },
+            friction: 6,
+            tension: 80,
+            useNativeDriver: false,
+          }).start();
+        }
+      },
+    }),
+    [W_MODAL, handleSwipeComplete, pan]
+  );
 
   const renderCards = () => {
     const visibleDeck = deckProducts.slice(currentIndex, currentIndex + 3);
@@ -392,23 +420,26 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
       const isTop = offsetIdx === 0;
       const isSecond = offsetIdx === 1;
       const uri = item.images?.[0]?.imageUrl || item.imageUrl || null;
+      const price = parseFloat(item.basePrice || item.price || '0');
+      const discountPrice = parseFloat(item.discountPrice || '0');
+      const finalPrice = discountPrice > 0 ? price - discountPrice : price;
 
       let cardStyle: any = {
         position: 'absolute',
-        width: W_MODAL * 0.85,
-        height: 430,
-        backgroundColor: isDark ? '#14121C' : '#FFFFFF',
-        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        width: Math.min(W_MODAL * 0.88, 380),
+        height: 440,
+        backgroundColor: isDark ? '#181622' : '#FFFFFF',
+        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
         borderWidth: 1,
-        borderRadius: 26,
+        borderRadius: 24,
         overflow: 'hidden',
         alignSelf: 'center',
-        top: 10,
-        elevation: isTop ? 12 : 3,
+        top: 0,
+        elevation: isTop ? 10 : isSecond ? 5 : 2,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: isTop ? 8 : 2 },
-        shadowOpacity: isTop ? 0.20 : 0.06,
-        shadowRadius: isTop ? 14 : 4,
+        shadowOffset: { width: 0, height: isTop ? 8 : 4 },
+        shadowOpacity: isTop ? 0.22 : 0.08,
+        shadowRadius: isTop ? 14 : 6,
       };
 
       if (isTop) {
@@ -417,21 +448,21 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
           { translateY: pan.y },
           {
             rotate: pan.x.interpolate({
-              inputRange: [-W_MODAL / 2, 0, W_MODAL / 2],
-              outputRange: ['-12deg', '0deg', '12deg'],
+              inputRange: [-W_MODAL, 0, W_MODAL],
+              outputRange: ['-18deg', '0deg', '18deg'],
               extrapolate: 'clamp',
             }),
           },
         ];
       } else if (isSecond) {
         const scaleSecondCard = pan.x.interpolate({
-          inputRange: [-W_MODAL, 0, W_MODAL],
+          inputRange: [-W_MODAL / 2, 0, W_MODAL / 2],
           outputRange: [1, 0.94, 1],
           extrapolate: 'clamp',
         });
         const translateYSecondCard = pan.x.interpolate({
-          inputRange: [-W_MODAL, 0, W_MODAL],
-          outputRange: [0, 14, 0],
+          inputRange: [-W_MODAL / 2, 0, W_MODAL / 2],
+          outputRange: [0, 16, 0],
           extrapolate: 'clamp',
         });
         cardStyle.transform = [
@@ -442,7 +473,7 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
       } else {
         cardStyle.transform = [
           { scale: 0.88 },
-          { translateY: 28 },
+          { translateY: 30 },
         ];
         cardStyle.opacity = 0.7;
       }
@@ -468,19 +499,60 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
           {uri ? (
             <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center' }]}>
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' }]}>
               <AppIcon name="diamond-stone" size={48} color={colors.primary} />
             </View>
           )}
 
+          {/* Bottom Card Info Overlay */}
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => {
+              if (item.id) {
+                onClose();
+                goProduct(item.id);
+              }
+            }}
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: 'rgba(0,0,0,0.65)',
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              borderBottomLeftRadius: 24,
+              borderBottomRightRadius: 24,
+            }}
+          >
+            <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 17 }} numberOfLines={1}>
+              {item.name || 'Ethnic Jewellery'}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+                <Text style={{ color: colors.gold || '#F59E0B', fontFamily: fontFamily.sansBold, fontSize: 15 }}>
+                  ₹{finalPrice.toLocaleString('en-IN')}
+                </Text>
+                {discountPrice > 0 && (
+                  <Text style={{ color: 'rgba(255,255,255,0.6)', fontFamily: fontFamily.sans, fontSize: 11, textDecorationLine: 'line-through' }}>
+                    ₹{price.toLocaleString('en-IN')}
+                  </Text>
+                )}
+              </View>
+              <Text style={{ color: 'rgba(255,255,255,0.8)', fontFamily: fontFamily.sansMedium, fontSize: 11 }}>
+                Tap to View →
+              </Text>
+            </View>
+          </TouchableOpacity>
+
           {/* Stamps */}
           {isTop && (
             <>
-              <Animated.View style={{ position: 'absolute', top: 30, left: 24, transform: [{ rotate: '-18deg' }], opacity: likeOpacity, borderColor: '#4CAF50', borderWidth: 4, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.9)' }}>
-                <Text style={{ color: '#4CAF50', fontFamily: fontFamily.sansBold, fontSize: 28, letterSpacing: 2 }}>LIKE</Text>
+              <Animated.View style={{ position: 'absolute', top: 28, left: 20, transform: [{ rotate: '-18deg' }], opacity: likeOpacity, borderColor: '#4CAF50', borderWidth: 3.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.92)' }}>
+                <Text style={{ color: '#4CAF50', fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: 2 }}>LIKE</Text>
               </Animated.View>
-              <Animated.View style={{ position: 'absolute', top: 30, right: 24, transform: [{ rotate: '18deg' }], opacity: nopeOpacity, borderColor: '#FF5C6C', borderWidth: 4, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.9)' }}>
-                <Text style={{ color: '#FF5C6C', fontFamily: fontFamily.sansBold, fontSize: 28, letterSpacing: 2 }}>NOPE</Text>
+              <Animated.View style={{ position: 'absolute', top: 28, right: 20, transform: [{ rotate: '18deg' }], opacity: nopeOpacity, borderColor: '#FF5C6C', borderWidth: 3.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.92)' }}>
+                <Text style={{ color: '#FF5C6C', fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: 2 }}>NOPE</Text>
               </Animated.View>
             </>
           )}

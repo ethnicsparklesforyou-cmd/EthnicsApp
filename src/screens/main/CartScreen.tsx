@@ -463,7 +463,7 @@ export function CartScreen({ navigation }: Props) {
             <TouchableOpacity
               onPress={() => {
                 if (!isAuthenticated) {
-                  setShowGuestModal(true);
+                  navigation.getParent()?.navigate('Auth' as never);
                   return;
                 }
                 if (isB2bUser && subtotal < B2B_MIN_ORDER) {

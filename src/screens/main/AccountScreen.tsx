@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppIcon, ConfirmModal, Screen } from '../../components/common';
+import { AppIcon, ConfirmModal, Screen, useAppModal } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { getInitials } from '../../utils/helpers';
+import { deleteAccount } from '../../services/user';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '../../navigation/types';
 
@@ -16,6 +17,7 @@ const MENU = [
   { icon: 'map-marker-outline', label: 'Saved Addresses', sub: 'Manage delivery locations', route: 'Addresses' },
   { icon: 'heart-outline', label: 'Wishlist', sub: 'Your saved favourites', route: 'Wishlist' },
   { icon: 'account-edit-outline', label: 'Edit Profile', sub: 'Update your personal info', route: 'Profile' },
+  { icon: 'shield-lock-outline', label: 'Security & Settings', sub: 'Password & account settings', route: 'Settings' },
 ];
 
 export function AccountScreen({ navigation }: Props) {
@@ -24,11 +26,30 @@ export function AccountScreen({ navigation }: Props) {
   const { user, logout, isAuthenticated } = useAuth();
   const { totalItems } = useCart();
   const { ids } = useWishlist();
+  const { show } = useAppModal();
   const [showLogout, setShowLogout] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const name = user?.name?.trim() || 'Guest User';
   const phone = user?.phone || '';
   const roleLabel = user?.userRole === 2 ? 'Business Account' : 'Retail Account';
+
+  const handleDeleteAccount = async () => {
+    if (!user?.id) return;
+    setDeletingAccount(true);
+    try {
+      await deleteAccount(user.id);
+      setShowDeleteModal(false);
+      await logout();
+      show({ type: 'success', title: 'Account Deleted', message: 'Your account and data have been permanently deleted.' });
+    } catch {
+      show({ type: 'error', title: 'Deletion Failed', message: 'Failed to delete account. Please try again.' });
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <Screen style={{ backgroundColor: colors.background }}>
@@ -50,14 +71,6 @@ export function AccountScreen({ navigation }: Props) {
               Sign In / Register
             </Text>
           </TouchableOpacity>
-          <View style={[styles.promoRow, { marginTop: 36 }]}>
-            {[{ icon: 'truck-fast-outline', t: 'Free Delivery' }, { icon: 'shield-check-outline', t: 'BIS Hallmarked' }, { icon: 'refresh', t: '7-Day Returns' }].map(p => (
-              <View key={p.t} style={styles.promoItem}>
-                <AppIcon name={p.icon as any} color={colors.primary} size={20} />
-                <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 10.5, marginTop: 4, textAlign: 'center' }}>{p.t}</Text>
-              </View>
-            ))}
-          </View>
         </View>
       </Screen>
     );
@@ -125,10 +138,19 @@ export function AccountScreen({ navigation }: Props) {
         {/* ── Sign Out ── */}
         <TouchableOpacity
           onPress={() => setShowLogout(true)}
-          style={[styles.logoutBtn, { marginHorizontal: spacing[4], marginTop: spacing[3], borderColor: '#FCA5A5', backgroundColor: '#FEF2F2', borderRadius: radius.xl }]}
+          style={[styles.logoutBtn, { marginHorizontal: spacing[4], marginTop: spacing[4], borderColor: '#FCA5A5', backgroundColor: '#FEF2F2', borderRadius: radius.xl }]}
         >
           <AppIcon name="logout" color="#DC2626" size={18} />
           <Text style={{ color: '#DC2626', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign Out</Text>
+        </TouchableOpacity>
+
+        {/* ── Delete Account ── */}
+        <TouchableOpacity
+          onPress={() => setShowDeleteModal(true)}
+          style={[styles.deleteAccountBtn, { marginHorizontal: spacing[4], marginTop: spacing[2], borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.xl }]}
+        >
+          <AppIcon name="trash-can-outline" color="#DC2626" size={17} />
+          <Text style={{ color: '#DC2626', fontFamily: fontFamily.sansMedium, fontSize: fontSize.sm }}>Delete Account</Text>
         </TouchableOpacity>
 
         {/* App version */}
@@ -148,6 +170,19 @@ export function AccountScreen({ navigation }: Props) {
         onCancel={() => setShowLogout(false)}
         onConfirm={async () => { setShowLogout(false); await logout(); }}
         icon={<AppIcon name="logout" color="#DC2626" size={22} />}
+      />
+
+      <ConfirmModal
+        visible={showDeleteModal}
+        title="Delete Account?"
+        message="Are you sure you want to delete your account? This action is permanent. All your profile data, addresses, cart items, and wishlist will be deleted, and you will be signed out immediately."
+        confirmLabel="Delete My Account"
+        cancelLabel="Keep Account"
+        danger
+        loading={deletingAccount}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+        icon={<AppIcon name="alert-circle-outline" color="#DC2626" size={22} />}
       />
     </Screen>
   );
@@ -172,4 +207,6 @@ const styles = StyleSheet.create({
   menuIcon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderWidth: 1 },
+  deleteAccountBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderWidth: 1 },
 });
+

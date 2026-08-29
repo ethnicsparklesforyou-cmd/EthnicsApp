@@ -108,6 +108,14 @@ export function LoginScreen({ navigation: _navigation }: Props) {
     finally { setLoading(false); }
   };
 
+  const handleDismiss = () => {
+    if (_navigation.canGoBack()) {
+      _navigation.goBack();
+    } else {
+      _navigation.getParent()?.navigate('Main' as never);
+    }
+  };
+
   const handleRegister = async (accountType: 'retail' | 'b2b') => {
     const clean = sanitizePhone(phone);
     try {
@@ -116,6 +124,7 @@ export function LoginScreen({ navigation: _navigation }: Props) {
       if (res.ok && payload?.user && payload?.token) {
         await migrateCart(payload.user.id);
         await login(payload.user, payload.token);
+        handleDismiss();
       } else {
         setError((res.json as any).statusMessage || 'Registration failed. Please try again.');
         otpRef.current?.reset();
@@ -137,6 +146,7 @@ export function LoginScreen({ navigation: _navigation }: Props) {
       if (res.ok && payload?.isExist && payload?.user && payload?.token) {
         await migrateCart(payload.user.id);
         await login(payload.user, payload.token);
+        handleDismiss();
         return;
       } else if (res.ok && (payload?.isExist === false || ((res.json as any).status === 200 && !payload?.isExist))) {
         await handleRegister('retail');
@@ -156,6 +166,7 @@ export function LoginScreen({ navigation: _navigation }: Props) {
         roleName: 'retail',
       };
       await login(demoUser as any, 'demo_token_review_session');
+      handleDismiss();
       setLoading(false);
       return;
     }
@@ -210,8 +221,7 @@ export function LoginScreen({ navigation: _navigation }: Props) {
               backgroundColor: colors.surface,
               borderTopLeftRadius: 28,
               borderTopRightRadius: 28,
-              paddingBottom: bottomInset,
-              maxHeight: '85%',
+              paddingBottom: Math.max(bottomInset, 16),
               transform: [{ translateY: slideY }],
             },
           ]}
@@ -219,93 +229,98 @@ export function LoginScreen({ navigation: _navigation }: Props) {
           {/* Handle */}
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
-          <ScrollView
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-            contentContainerStyle={{ flexGrow: 1 }}
-          >
-            {/* Step badge + close area */}
-            <View style={styles.sheetHeader}>
-              <View style={[styles.stepBadge, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '40' }]}>
-                <View style={[styles.stepDot, { backgroundColor: colors.primary }]} />
-                <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 1.2 }}>
-                  {step === 'phone' ? 'STEP 1 OF 2' : 'STEP 2 OF 2'}
-                </Text>
-              </View>
+          {/* Step badge + close area */}
+          <View style={styles.sheetHeader}>
+            <View style={[styles.stepBadge, { backgroundColor: colors.primary + '18', borderColor: colors.primary + '40' }]}>
+              <View style={[styles.stepDot, { backgroundColor: colors.primary }]} />
+              <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 1.2 }}>
+                {step === 'phone' ? 'STEP 1 OF 2' : 'STEP 2 OF 2'}
+              </Text>
             </View>
+            <TouchableOpacity onPress={handleDismiss} style={styles.closeBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+              <AppIcon name="close" color={colors.textMuted} size={22} />
+            </TouchableOpacity>
+          </View>
 
-            <View style={[styles.sheetBody, { paddingHorizontal: spacing[5] }]}>
-              <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 22, marginBottom: 4 }}>
-                {stepTitle}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginBottom: 24 }}>
-                {stepSub}
-              </Text>
+          <View style={[styles.sheetBody, { paddingHorizontal: spacing[5] }]}>
+            <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 22, marginBottom: 4 }}>
+              {stepTitle}
+            </Text>
+            <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginBottom: 16 }}>
+              {stepSub}
+            </Text>
 
-              {/* ── Phone step ── */}
-              {step === 'phone' && (
-                <>
-                  <View style={styles.phoneRow}>
-                    <View style={[styles.countryCode, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderRadius: radius.md }]}>
-                      <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>+91</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Input
-                        label="Mobile Number"
-                        value={phone}
-                        onChangeText={v => { setPhone(sanitizePhone(v)); setPhoneError(''); }}
-                        keyboardType="phone-pad"
-                        maxLength={15}
-                        placeholder="10-digit mobile number"
-                        error={phoneError}
-                      />
-                    </View>
+            {/* ── Phone step ── */}
+            {step === 'phone' && (
+              <>
+                <View style={styles.phoneRow}>
+                  <View style={[styles.countryCode, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderRadius: radius.md }]}>
+                    <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>+91</Text>
                   </View>
-                  <Button label="Send OTP" onPress={handlePhoneSubmit} loading={loading} />
-                </>
-              )}
-
-              {/* ── OTP step ── */}
-              {step === 'otp' && (
-                <>
-                  <TouchableOpacity onPress={() => { setStep('phone'); setError(''); otpRef.current?.reset(); }} style={{ marginBottom: 20 }}>
-                    <Text style={{ color: colors.primary, fontFamily: fontFamily.sans, fontSize: fontSize.sm }}>← Change number</Text>
-                  </TouchableOpacity>
-                  <OtpInput ref={otpRef} onComplete={verifyCode} disabled={loading} />
-                  {loading && (
-                    <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 12, textAlign: 'center' }}>
-                      Verifying...
-                    </Text>
-                  )}
-                  <View style={styles.resendRow}>
-                    <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm }}>Didn't receive?{'  '}</Text>
-                    <TouchableOpacity onPress={resendOtp} disabled={resendTimer > 0 || loading}>
-                      <Text style={{ color: resendTimer > 0 ? colors.textMuted : colors.primary, fontFamily: fontFamily.sansBold, fontSize: fontSize.sm }}>
-                        {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
-                      </Text>
-                    </TouchableOpacity>
+                  <View style={{ flex: 1 }}>
+                    <Input
+                      label="Mobile Number"
+                      value={phone}
+                      onChangeText={v => { setPhone(sanitizePhone(v)); setPhoneError(''); }}
+                      keyboardType="phone-pad"
+                      maxLength={15}
+                      placeholder="10-digit mobile number"
+                      error={phoneError}
+                    />
                   </View>
-                </>
-              )}
-
-              {/* Error */}
-              {!!error && (
-                <View style={[styles.errorBox, { backgroundColor: colors.error + '12', borderColor: colors.error + '50', borderRadius: radius.lg }]}>
-                  <AppIcon name="alert-circle-outline" size={15} color={colors.error} />
-                  <Text style={{ color: colors.error, fontFamily: fontFamily.sans, fontSize: fontSize.sm, flex: 1, marginLeft: 8 }}>{error}</Text>
                 </View>
-              )}
+                <Button label="Send OTP" onPress={handlePhoneSubmit} loading={loading} />
+                <TouchableOpacity
+                  onPress={handleDismiss}
+                  activeOpacity={0.7}
+                  style={[styles.skipBtn, { borderColor: colors.border, borderRadius: radius.xl, marginTop: 10 }]}
+                >
+                  <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansMedium, fontSize: fontSize.sm }}>
+                    Explore as Guest
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
 
-              {/* Footer */}
-              <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, textAlign: 'center', lineHeight: 17, marginTop: 20, marginBottom: 8 }}>
-                By continuing, you agree to our{' '}
-                <Text style={{ color: colors.primary }}>Terms</Text>
-                {' '}and{' '}
-                <Text style={{ color: colors.primary }}>Privacy Policy</Text>.
-              </Text>
-            </View>
-          </ScrollView>
+            {/* ── OTP step ── */}
+            {step === 'otp' && (
+              <>
+                <TouchableOpacity onPress={() => { setStep('phone'); setError(''); otpRef.current?.reset(); }} style={{ marginBottom: 16 }}>
+                  <Text style={{ color: colors.primary, fontFamily: fontFamily.sans, fontSize: fontSize.sm }}>← Change number</Text>
+                </TouchableOpacity>
+                <OtpInput ref={otpRef} onComplete={verifyCode} disabled={loading} />
+                {loading && (
+                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 10, textAlign: 'center' }}>
+                    Verifying...
+                  </Text>
+                )}
+                <View style={styles.resendRow}>
+                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm }}>Didn't receive?{'  '}</Text>
+                  <TouchableOpacity onPress={resendOtp} disabled={resendTimer > 0 || loading}>
+                    <Text style={{ color: resendTimer > 0 ? colors.textMuted : colors.primary, fontFamily: fontFamily.sansBold, fontSize: fontSize.sm }}>
+                      {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+
+            {/* Error */}
+            {!!error && (
+              <View style={[styles.errorBox, { backgroundColor: colors.error + '12', borderColor: colors.error + '50', borderRadius: radius.lg }]}>
+                <AppIcon name="alert-circle-outline" size={15} color={colors.error} />
+                <Text style={{ color: colors.error, fontFamily: fontFamily.sans, fontSize: fontSize.sm, flex: 1, marginLeft: 8 }}>{error}</Text>
+              </View>
+            )}
+
+            {/* Footer */}
+            <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, textAlign: 'center', lineHeight: 16, marginTop: 14, marginBottom: 4 }}>
+              By continuing, you agree to our{' '}
+              <Text style={{ color: colors.primary }}>Terms</Text>
+              {' '}and{' '}
+              <Text style={{ color: colors.primary }}>Privacy Policy</Text>.
+            </Text>
+          </View>
         </Animated.View>
       </KeyboardAvoidingView>
     </Screen>
@@ -316,18 +331,20 @@ const styles = StyleSheet.create({
   bg: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   backdrop: { backgroundColor: 'rgba(0,0,0,0.45)' },
   kavWrap: { position: 'absolute', bottom: 0, left: 0, right: 0 },
-  sheet: { paddingBottom: 36 },
-  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 4 },
-  sheetHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
-  stepBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1 },
+  sheet: { paddingBottom: 0 },
+  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginTop: 10, marginBottom: 2 },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 6, paddingBottom: 2 },
+  stepBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, borderWidth: 1 },
   stepDot: { width: 6, height: 6, borderRadius: 3 },
-  sheetBody: { paddingTop: 12 },
-  phoneRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginBottom: 16 },
-  countryCode: { height: 54, width: 72, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  resendRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20 },
+  closeBtn: { padding: 4, alignItems: 'center', justifyContent: 'center' },
+  skipBtn: { paddingVertical: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  sheetBody: { paddingTop: 6 },
+  phoneRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginBottom: 12 },
+  countryCode: { height: 52, width: 72, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  resendRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 16 },
   phoneBadge: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, padding: 12, marginBottom: 20 },
   typeGrid: { flexDirection: 'row', gap: 12, marginBottom: 8 },
   typeCard: { flex: 1, borderWidth: 1.5, padding: 16, alignItems: 'center' },
   typeIconWrap: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
-  errorBox: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, padding: 12, marginTop: 12 },
+  errorBox: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, padding: 10, marginTop: 10 },
 });

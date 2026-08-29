@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { AppIcon, PageHeader, Screen, useAppModal } from '../../components/common';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { AppIcon, ConfirmModal, PageHeader, Screen, useAppModal } from '../../components/common';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { updateUser } from '../../services/user';
+import { deleteAccount, updateUser } from '../../services/user';
 import { getInitials } from '../../utils/helpers';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '../../navigation/types';
@@ -15,17 +15,40 @@ type Props = { navigation: NativeStackNavigationProp<MainStackParamList, 'Profil
 export function ProfileScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { colors, fontFamily, fontSize, spacing, radius } = theme;
-  const { user, updateUser: updateAuthUser } = useAuth();
+  const { user, logout, updateUser: updateAuthUser } = useAuth();
   const { show } = useAppModal();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '' });
 
   useEffect(() => {
     if (user) setForm({ name: user.name || '', email: user.email || '', phone: user.phone || '' });
   }, [user]);
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <Screen style={{ backgroundColor: colors.background }}>
+        <PageHeader title="Profile" onBack={() => navigation.goBack()} />
+        <View style={styles.guestCenter}>
+          <AppIcon name="account-circle-outline" color={colors.primary} size={48} />
+          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.lg, marginTop: 16 }}>
+            Sign In Required
+          </Text>
+          <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 6, textAlign: 'center', paddingHorizontal: 32 }}>
+            Please sign in to view and manage your profile details.
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.getParent()?.navigate('Auth' as never)}
+            style={[styles.guestBtn, { backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 24 }]}
+          >
+            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+          </TouchableOpacity>
+        </View>
+      </Screen>
+    );
+  }
 
   const handleSave = async () => {
     setLoading(true);
@@ -42,6 +65,22 @@ export function ProfileScreen({ navigation }: Props) {
       show({ type: 'error', title: 'Update Failed', message: 'Failed to update profile. Please try again.' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user?.id) return;
+    setDeletingAccount(true);
+    try {
+      await deleteAccount(user.id);
+      setShowDeleteModal(false);
+      await logout();
+      navigation.goBack();
+      show({ type: 'success', title: 'Account Deleted', message: 'Your account has been deleted successfully.' });
+    } catch {
+      show({ type: 'error', title: 'Deletion Failed', message: 'Failed to delete account. Please try again.' });
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -91,7 +130,7 @@ export function ProfileScreen({ navigation }: Props) {
         </View>
 
         {/* Info / Edit Card */}
-            <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border, marginHorizontal: spacing[4], marginTop: spacing[4], borderRadius: radius.xl }]}>
+        <View style={[styles.infoCard, { backgroundColor: colors.surface, borderColor: colors.border, marginHorizontal: spacing[4], marginTop: spacing[4], borderRadius: radius.xl }]}>
           {editing ? (
             <View style={{ padding: 16 }}>
               <Input label="Full Name" value={form.name} onChangeText={v => setForm(s => ({ ...s, name: v }))} />
@@ -125,16 +164,50 @@ export function ProfileScreen({ navigation }: Props) {
           )}
         </View>
 
+        {/* Danger Zone */}
+        <View style={[styles.dangerCard, { backgroundColor: colors.surface, borderColor: '#FCA5A5', marginHorizontal: spacing[4], marginTop: spacing[4], borderRadius: radius.xl, padding: 16 }]}>
+          <Text style={{ color: '#DC2626', fontFamily: fontFamily.sansBold, fontSize: fontSize.sm, marginBottom: 4 }}>Danger Zone</Text>
+          <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs, marginBottom: 14, lineHeight: 18 }}>
+            Permanently delete your account and all associated personal data including profile details, saved addresses, wishlist, and cart.
+          </Text>
+          <TouchableOpacity
+            onPress={() => setShowDeleteModal(true)}
+            activeOpacity={0.8}
+            style={[styles.dangerBtn, { borderColor: '#DC2626', borderRadius: radius.lg }]}
+          >
+            <AppIcon name="trash-can-outline" color="#DC2626" size={16} />
+            <Text style={{ color: '#DC2626', fontFamily: fontFamily.sansBold, fontSize: fontSize.sm }}>Delete Account</Text>
+          </TouchableOpacity>
+        </View>
+
       </ScrollView>
+
+      <ConfirmModal
+        visible={showDeleteModal}
+        title="Delete Account?"
+        message="Are you sure you want to permanently delete your account? All your personal information, saved addresses, cart items, and wishlist will be erased immediately."
+        confirmLabel="Delete My Account"
+        cancelLabel="Keep Account"
+        danger
+        loading={deletingAccount}
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+        icon={<AppIcon name="alert-circle-outline" color="#DC2626" size={22} />}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  guestCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  guestBtn: { paddingHorizontal: 32, paddingVertical: 14 },
   avatarCard: { borderWidth: StyleSheet.hairlineWidth, padding: 24, alignItems: 'center' },
   avatarCircle: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
   rolePill: { paddingHorizontal: 16, paddingVertical: 5 },
   infoCard: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   infoRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 14 },
   infoIcon: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
+  dangerCard: { borderWidth: 1 },
+  dangerBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderWidth: 1, backgroundColor: '#FEF2F2' },
 });
+

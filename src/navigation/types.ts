@@ -33,6 +33,7 @@ export type TabParamList = {
 };
 
 export type RootStackParamList = {
-  Auth: NavigatorScreenParams<AuthStackParamList>;
-  Main: NavigatorScreenParams<MainStackParamList>;
+  Auth: NavigatorScreenParams<AuthStackParamList> | undefined;
+  Main: NavigatorScreenParams<MainStackParamList> | undefined;
 };
+

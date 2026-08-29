@@ -17,3 +17,12 @@ export async function resetPassword(userId: number, payload: { currentPassword: 
   });
   return response.json();
 }
+
+export async function deleteAccount(userId: number) {
+  const response = await fetch(`${API_BASE_URL}users/${userId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return response.json();
+}
+
