@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { PageHeader, Screen } from '../../components/common';
 import { AppIcon } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,26 +14,53 @@ type Props = { navigation: NativeStackNavigationProp<MainStackParamList, 'Wishli
 export function WishlistScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { colors, fontFamily, fontSize, spacing, radius } = theme;
-  const { ids } = useWishlist();
+  const { ids, refreshWishlist } = useWishlist();
   const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(ids.size > 0);
+  const [refreshing, setRefreshing] = useState(false);
+  const initialFetchDone = useRef(false);
 
   useEffect(() => {
-    if (ids.size === 0) { setProducts([]); return; }
-    setLoading(true);
-    fetchProducts({ limit: 100 })
-      .then(res => {
-        const all = res?.data?.products || [];
-        setProducts(all.filter((p: any) => ids.has(p.id)));
-      })
-      .finally(() => setLoading(false));
+    if (!initialFetchDone.current) {
+      if (ids.size > 0) {
+        initialFetchDone.current = true;
+        setLoading(true);
+        fetchProducts({ limit: 100 })
+          .then(res => {
+            const all = res?.data?.products || [];
+            setProducts(all.filter((p: any) => ids.has(p.id)));
+          })
+          .catch(() => {})
+          .finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    } else {
+      setProducts(prev => prev.filter(p => ids.has(p.id)));
+    }
   }, [ids]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshWishlist();
+      const res = await fetchProducts({ limit: 100 });
+      const all = res?.data?.products || [];
+      setProducts(all.filter((p: any) => ids.has(p.id)));
+    } catch (err) {
+      console.error('Refresh failed:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [ids, refreshWishlist]);
+
+  const count = products.length;
 
   return (
     <Screen style={{ backgroundColor: colors.background }}>
       <PageHeader
         title="Wishlist"
-        subtitle={ids.size > 0 ? `${ids.size} saved item${ids.size > 1 ? 's' : ''}` : undefined}
+        subtitle={count > 0 ? `${count} saved item${count > 1 ? 's' : ''}` : undefined}
         onBack={() => navigation.goBack()}
       />
 
@@ -44,7 +71,7 @@ export function WishlistScreen({ navigation }: Props) {
             Loading your wishlist...
           </Text>
         </View>
-      ) : ids.size === 0 ? (
+      ) : count === 0 ? (
         <View style={styles.center}>
           <View style={[styles.emptyCircle, { backgroundColor: '#FFF1F2', borderColor: '#FECDD3' }]}>
             <AppIcon name="heart-outline" color="#E11D48" size={34} />
@@ -71,6 +98,14 @@ export function WishlistScreen({ navigation }: Props) {
           columnWrapperStyle={{ gap: 12 }}
           ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
           renderItem={({ item }) => (
             <View style={{ flex: 1 }}>
               <ProductCard
@@ -83,7 +118,7 @@ export function WishlistScreen({ navigation }: Props) {
             <View style={[styles.listHeader, { backgroundColor: colors.surfaceElevated, borderRadius: radius.lg, marginBottom: 16 }]}>
               <AppIcon name="heart" color="#E11D48" size={16} />
               <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm }}>
-                {products.length} item{products.length > 1 ? 's' : ''} saved
+                {count} item{count > 1 ? 's' : ''} saved
               </Text>
             </View>
           }

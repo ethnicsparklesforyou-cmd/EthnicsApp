@@ -13,13 +13,14 @@ export const lightTheme = {
     surfaceElevated: palette.lightSurfaceElevated,
     card: palette.lightSurface,
 
-    primary: palette.primary,
+    primary: palette.primary,          // #7C3AED (Royal Purple)
     primaryLight: palette.primaryLight,
     primaryDark: palette.primaryDark,
-    accent: palette.primary,
-    gold: palette.primary,
+    accent: palette.rose,              // #EC4899 (Hot Rose Pink)
+    rose: palette.rose,
+    gold: palette.gold,
     vanilla: palette.lightSurfaceElevated,
-    stone: '#E8E2D9',
+    stone: palette.lightBorder,
 
     textPrimary: palette.lightTextPrimary,
     textSecondary: palette.lightTextSecondary,
@@ -51,28 +52,29 @@ export const darkTheme = {
     surfaceElevated: palette.darkSurfaceElevated,
     card: palette.darkSurface,
 
-    primary: '#D4A574',          // brighter gold — pops on dark
-    primaryLight: '#E8C49A',
-    primaryDark: '#B5814A',
-    accent: '#D4A574',
-    gold: '#D4A574',
+    primary: '#A855F7',                // Electric Amethyst Neon Purple
+    primaryLight: '#C084FC',           // Radiant Lavender Glow
+    primaryDark: '#7E22CE',            // Deep Royal Purple
+    accent: '#F43F5E',                 // Electric Rose Pink highlight
+    rose: '#F43F5E',
+    gold: '#FBBF24',                   // 18K Sparkling Gold
     vanilla: palette.darkSurfaceElevated,
     stone: palette.darkBorder,
 
     textPrimary: palette.darkTextPrimary,
     textSecondary: palette.darkTextSecondary,
     textMuted: palette.darkTextMuted,
-    textOnPrimary: '#0A0A0F',
-    textInverse: '#D4A574',
+    textOnPrimary: '#08070D',
+    textInverse: '#A855F7',
 
     border: palette.darkBorder,
-    borderLight: '#222230',
+    borderLight: palette.darkBorderSoft,
 
     success: '#34D399',
     error: '#F87171',
     warning: '#FBBF24',
     info: '#60A5FA',
-    overlay: 'rgba(0,0,0,0.65)',
+    overlay: 'rgba(0,0,0,0.78)',
     statusBar: palette.darkBg,
     tabBar: palette.darkSurface,
     inputBg: palette.darkSurfaceElevated,

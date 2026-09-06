@@ -2,7 +2,14 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { InteractionManager } from 'react-native';
 import { useAuth } from './AuthContext';
-import { addToServerCart, clearServerCart, fetchServerCart, removeFromServerCart } from '../services/cart';
+import {
+  addToServerCart,
+  clearServerCart,
+  fetchServerCart,
+  removeFromServerCart,
+  updateServerCartQuantity,
+  removeServerCartItemOrProduct,
+} from '../services/cart';
 import { fetchProductById } from '../services/products';
 import { getFirstImageUrl } from '../utils/imageUtils';
 
@@ -70,11 +77,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const scheduleSync = useCallback((task: () => void) => {
+  const scheduleSync = useCallback((task: () => void | Promise<void>) => {
     if (syncQueueRef.current) clearTimeout(syncQueueRef.current);
     syncQueueRef.current = setTimeout(() => {
       InteractionManager.runAfterInteractions(() => {
-        task();
+        void task();
       });
     }, 0);
   }, []);
@@ -162,6 +169,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         );
 
         hydrateFromServerCart(enrichedItems);
+      } else if (Array.isArray(serverItems) && serverItems.length === 0 && !isCartClearedRef.current) {
+        hydrateFromServerCart([]);
       }
       syncedUserRef.current = user.id;
     };
@@ -177,11 +186,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     saveAndSetItems(prev => {
       const existingIndex = prev.findIndex(i => isSameProduct(i.productId, item.productId));
       if (existingIndex > -1) {
+        const current = prev[existingIndex];
+        const maxStock = typeof item.stockQuantity === 'number' && item.stockQuantity > 0
+          ? item.stockQuantity
+          : (typeof current.stockQuantity === 'number' && current.stockQuantity > 0 ? current.stockQuantity : 999);
+        const newQty = Math.min(maxStock, current.quantity + item.quantity);
         const updated = [...prev];
         updated[existingIndex] = {
-          ...updated[existingIndex],
-          quantity: updated[existingIndex].quantity + item.quantity,
-          image: updated[existingIndex].image || item.image,
+          ...current,
+          quantity: newQty,
+          stockQuantity: maxStock,
+          image: current.image || item.image,
         };
         return updated;
       }
@@ -189,13 +204,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (isAuthenticated && user) {
-      scheduleSync(() => {
-        addToServerCart({
-          userId: user.id,
-          productId: Number(item.productId),
-          quantity: item.quantity,
-          size: item.size || null,
-        }).catch(() => {});
+      scheduleSync(async () => {
+        try {
+          const res = await addToServerCart({
+            userId: user.id,
+            productId: Number(item.productId),
+            quantity: item.quantity,
+            size: item.size || null,
+          });
+          const newItemId = res?.data?.itemId ?? res?.result?.itemId ?? res?.itemId;
+          if (newItemId) {
+            saveAndSetItems(prev =>
+              prev.map(i => (isSameProduct(i.productId, item.productId) ? { ...i, cartItemId: newItemId } : i)),
+            );
+          }
+        } catch {}
       });
     }
   }, [saveAndSetItems, scheduleSync, isAuthenticated, user]);
@@ -207,44 +230,44 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removedProductIdsRef.current.add(strId);
     }
 
+    let targetItem: CartItem | undefined;
     saveAndSetItems(prev => {
+      targetItem = prev.find(i => isSameProduct(i.productId, productId));
       if (quantity <= 0) {
         return prev.filter(i => !isSameProduct(i.productId, productId));
       }
-      return prev.map(i => isSameProduct(i.productId, productId) ? { ...i, quantity } : i);
+      return prev.map(i => (isSameProduct(i.productId, productId) ? { ...i, quantity } : i));
     });
 
     if (!isAuthenticated || !user) return;
 
     scheduleSync(async () => {
-      const target = items.find(i => isSameProduct(i.productId, productId));
       if (quantity <= 0) {
-        if (target?.cartItemId) {
-          await removeFromServerCart(target.cartItemId).catch(() => {});
-        }
+        await removeServerCartItemOrProduct(user.id, targetItem?.cartItemId, productId);
       } else {
-        const currentQty = target ? target.quantity : 0;
-        if (quantity > currentQty) {
-          await addToServerCart({
+        if (targetItem?.cartItemId) {
+          await updateServerCartQuantity({
+            cartItemId: targetItem.cartItemId,
+            quantity,
+            userId: user.id,
+          }).catch(() => {});
+        } else {
+          const res = await addToServerCart({
             userId: user.id,
             productId: Number(productId),
-            quantity: quantity - currentQty,
-            size: target?.size || null,
-          }).catch(() => {});
-        } else if (target?.cartItemId) {
-          await removeFromServerCart(target.cartItemId).catch(() => {});
-          if (quantity > 0) {
-            await addToServerCart({
-              userId: user.id,
-              productId: Number(productId),
-              quantity,
-              size: target.size || null,
-            }).catch(() => {});
+            quantity,
+            size: targetItem?.size || null,
+          }).catch(() => null);
+          const newItemId = res?.data?.itemId ?? res?.result?.itemId ?? res?.itemId;
+          if (newItemId) {
+            saveAndSetItems(prev =>
+              prev.map(i => (isSameProduct(i.productId, productId) ? { ...i, cartItemId: newItemId } : i)),
+            );
           }
         }
       }
     });
-  }, [items, saveAndSetItems, scheduleSync, isAuthenticated, user]);
+  }, [saveAndSetItems, scheduleSync, isAuthenticated, user]);
 
   const removeItem = useCallback((productId: CartItem['productId']) => {
     const strId = String(productId);
@@ -261,9 +284,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
     if (isAuthenticated && user) {
       scheduleSync(async () => {
-        if (targetCartItemId) {
-          await removeFromServerCart(targetCartItemId).catch(() => {});
-        }
+        await removeServerCartItemOrProduct(user.id, targetCartItemId, productId);
       });
     }
   }, [scheduleSync, isAuthenticated, user]);

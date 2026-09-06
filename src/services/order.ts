@@ -11,11 +11,11 @@ async function postJson(url: string, payload: unknown) {
   return body?.data !== undefined ? body : { ...body, data: body };
 }
 
-export async function verifyContactCheckout(payload: { userId: number }) {
+export async function verifyContactCheckout(payload: { userId: number; [key: string]: any }) {
   return postJson(`${API_BASE_URL}verify/verify-contact-checkout`, payload);
 }
 
-export async function verifyEmailCheckout(payload: { userId: number }) {
+export async function verifyEmailCheckout(payload: { userId: number; [key: string]: any }) {
   return postJson(`${API_BASE_URL}verify/verify-email-checkout`, payload);
 }
 
@@ -23,11 +23,11 @@ export async function checkoutOrder(payload: Record<string, unknown>) {
   return postJson(`${API_BASE_URL}orders/checkout`, payload);
 }
 
-export async function createCodChargeOrder(payload: { userId: number }) {
+export async function createCodChargeOrder(payload: { userId: number; [key: string]: any }) {
   return postJson(`${API_BASE_URL}orders/create-cod-charge-order`, payload);
 }
 
-export async function cancelPayment(payload: { orderId: number; userId: number }) {
+export async function cancelPayment(payload: { orderId: any; userId: number }) {
   return postJson(`${API_BASE_URL}orders/cancel-payment`, payload);
 }
 

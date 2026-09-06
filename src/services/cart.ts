@@ -34,6 +34,46 @@ export async function removeFromServerCart(cartItemId: number) {
   return response.json();
 }
 
+export async function updateServerCartQuantity(payload: {
+  cartItemId: number;
+  quantity: number;
+  userId: number;
+}) {
+  const response = await fetch(`${API_BASE_URL}cart/update-quantity`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return response.json();
+}
+
+export async function removeServerCartItemOrProduct(
+  userId: number,
+  cartItemId?: number | null,
+  productId?: number | string | null,
+) {
+  try {
+    if (cartItemId && Number(cartItemId) > 0) {
+      const res = await removeFromServerCart(Number(cartItemId));
+      return res;
+    }
+    if (userId && productId) {
+      const cartRes = await fetchServerCart(userId);
+      const items = cartRes?.data?.items || cartRes?.data?.cart?.items || [];
+      const match = items.find(
+        (it: any) => String(it.productId) === String(productId) || String(it.id) === String(productId),
+      );
+      const targetId = match?.id ?? match?.cartItemId ?? match?.itemId;
+      if (targetId) {
+        const res = await removeFromServerCart(Number(targetId));
+        return res;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to remove server cart item:', e);
+  }
+}
+
 export async function clearServerCart(cartId: number | null) {
   if (!cartId) return;
   const response = await fetch(`${API_BASE_URL}cart/clear/${cartId}`, {

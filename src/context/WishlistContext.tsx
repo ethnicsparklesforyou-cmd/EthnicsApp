@@ -1,13 +1,14 @@
-import React, { createContext, startTransition, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, startTransition, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { InteractionManager } from 'react-native';
 import { useAuth } from './AuthContext';
-import { fetchWishlist, toggleWishlist } from '../services/wishlist';
+import { addToWishlist, fetchWishlist, removeFromWishlist } from '../services/wishlist';
 
 type WishlistContextValue = {
   ids: Set<number>;
   toggle: (productId: number) => Promise<void>;
   isWishlisted: (productId: number) => boolean;
+  refreshWishlist: () => Promise<void>;
 };
 
 const STORAGE_KEY = '@jwellery_wishlist';
@@ -34,63 +35,86 @@ function extractWishlistedProductIds(payload: any): number[] {
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [ids, setIds] = useState<Set<number>>(new Set());
   const { user, isAuthenticated } = useAuth();
-  const syncQueueRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const syncWishlist = useCallback(async () => {
+    if (isAuthenticated && user?.id) {
+      try {
+        const res = await fetchWishlist(user.id);
+        const items = extractWishlistedProductIds(res);
+        setIds(new Set(items));
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      } catch {
+        try {
+          const raw = await AsyncStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const cached = JSON.parse(raw) as number[];
+            const valid = cached.map(Number).filter(n => Number.isFinite(n) && n > 0);
+            setIds(new Set(valid));
+          }
+        } catch {
+          setIds(new Set());
+        }
+      }
+    } else {
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) setIds(new Set(JSON.parse(raw) as number[]));
+      } catch {}
+    }
+  }, [isAuthenticated, user?.id]);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      setIds(new Set());
-      fetchWishlist(user.id)
-        .then(res => {
-          const items = extractWishlistedProductIds(res);
-          setIds(new Set(items));
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-        })
-        .catch(() => {
-          AsyncStorage.getItem(STORAGE_KEY)
-            .then(raw => {
-              if (!raw) return;
-              const cached = JSON.parse(raw) as number[];
-              const valid = cached.map(Number).filter(n => Number.isFinite(n) && n > 0);
-              setIds(new Set(valid));
-            })
-            .catch(() => setIds(new Set()));
-        });
-    } else {
-      AsyncStorage.getItem(STORAGE_KEY).then(raw => {
-        if (raw) setIds(new Set(JSON.parse(raw) as number[]));
-      });
-    }
-  }, [isAuthenticated, user?.id, user]);
+    syncWishlist();
+  }, [syncWishlist]);
 
   const toggle = useCallback(
     async (productId: number) => {
+      const numericId = Number(productId);
+      if (!Number.isFinite(numericId) || numericId <= 0) return;
+
+      const isCurrentlyWishlisted = ids.has(numericId);
       let nextIds: Set<number> | null = null;
+
       startTransition(() => {
         setIds(prev => {
           const next = new Set(prev);
-          next.has(productId) ? next.delete(productId) : next.add(productId);
+          if (isCurrentlyWishlisted) {
+            next.delete(numericId);
+          } else {
+            next.add(numericId);
+          }
           nextIds = next;
           return next;
         });
       });
+
       if (nextIds) {
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([...nextIds])).catch(() => {});
       }
-      if (isAuthenticated && user) {
-        if (syncQueueRef.current) clearTimeout(syncQueueRef.current);
-        syncQueueRef.current = setTimeout(() => {
-          InteractionManager.runAfterInteractions(() => {
-            toggleWishlist({ userId: user.id, productId }).catch(() => {});
-          });
-        }, 0);
+
+      if (isAuthenticated && user?.id) {
+        InteractionManager.runAfterInteractions(() => {
+          if (isCurrentlyWishlisted) {
+            removeFromWishlist({ userId: user.id, productId: numericId }).catch(err => {
+              console.error('Failed to remove from wishlist:', err);
+            });
+          } else {
+            addToWishlist({ userId: user.id, productId: numericId }).catch(err => {
+              console.error('Failed to add to wishlist:', err);
+            });
+          }
+        });
       }
     },
-    [isAuthenticated, user],
+    [ids, isAuthenticated, user?.id],
   );
 
-  const isWishlisted = useCallback((productId: number) => ids.has(productId), [ids]);
+  const isWishlisted = useCallback((productId: number) => ids.has(Number(productId)), [ids]);
 
-  const value = useMemo(() => ({ ids, toggle, isWishlisted }), [ids, toggle, isWishlisted]);
+  const value = useMemo(
+    () => ({ ids, toggle, isWishlisted, refreshWishlist: syncWishlist }),
+    [ids, toggle, isWishlisted, syncWishlist],
+  );
 
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>;
 }

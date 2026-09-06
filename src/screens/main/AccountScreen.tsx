@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppIcon, ConfirmModal, Screen, useAppModal } from '../../components/common';
+import { AppIcon, ConfirmModal, PageHeader, Screen, useAppModal } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -17,7 +17,6 @@ const MENU = [
   { icon: 'map-marker-outline', label: 'Saved Addresses', sub: 'Manage delivery locations', route: 'Addresses' },
   { icon: 'heart-outline', label: 'Wishlist', sub: 'Your saved favourites', route: 'Wishlist' },
   { icon: 'account-edit-outline', label: 'Edit Profile', sub: 'Update your personal info', route: 'Profile' },
-  { icon: 'shield-lock-outline', label: 'Security & Settings', sub: 'Password & account settings', route: 'Settings' },
 ];
 
 export function AccountScreen({ navigation }: Props) {
@@ -53,12 +52,13 @@ export function AccountScreen({ navigation }: Props) {
   if (!isAuthenticated) {
     return (
       <Screen style={{ backgroundColor: colors.background }}>
+        <PageHeader title="My Account" onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} />
         <View style={[styles.guestHero, { paddingHorizontal: spacing[5] }]}>
           <View style={[styles.guestEmoji, { backgroundColor: colors.surfaceElevated, borderRadius: radius.full }]}>
             <AppIcon name="account-circle-outline" color={colors.primary} size={50} />
           </View>
           <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize['2xl'], marginTop: 20, textAlign: 'center' }}>
-            Welcome to Ethnics Retail
+            Welcome to Ethnic Retail
           </Text>
           <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 8, textAlign: 'center', lineHeight: 22 }}>
             Sign in to access orders, wishlist, saved addresses and exclusive member benefits.
@@ -78,6 +78,7 @@ export function AccountScreen({ navigation }: Props) {
 
   return (
     <Screen style={{ backgroundColor: colors.background }}>
+      <PageHeader title="My Account" onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
 
         {/* ── Hero Profile Card ── */}
@@ -114,16 +115,16 @@ export function AccountScreen({ navigation }: Props) {
           </View>
         </View>
 
-        {/* ── Menu List ── */}
-        <View style={[styles.section, { marginHorizontal: spacing[4], marginTop: spacing[4], backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.xl }]}>
+        {/* ── Main Menu Section ── */}
+        <View style={[styles.section, { marginHorizontal: spacing[4], marginTop: spacing[4], backgroundColor: colors.surfaceElevated, borderColor: colors.border + '60', borderRadius: radius.xl, borderWidth: 1 }]}>
           {MENU.map((item, idx) => (
             <TouchableOpacity
               key={item.label}
               onPress={() => navigation.navigate(item.route as any)}
               activeOpacity={0.7}
-              style={[styles.menuRow, idx < MENU.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}
+              style={[styles.menuRow, idx < MENU.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border + '40' }]}
             >
-              <View style={[styles.menuIcon, { backgroundColor: colors.surfaceElevated, borderRadius: radius.lg }]}>
+              <View style={[styles.menuIcon, { backgroundColor: colors.primary + '12', borderRadius: radius.lg }]}>
                 <AppIcon name={item.icon as any} color={colors.primary} size={20} />
               </View>
               <View style={{ flex: 1 }}>
@@ -135,23 +136,40 @@ export function AccountScreen({ navigation }: Props) {
           ))}
         </View>
 
-        {/* ── Sign Out ── */}
-        <TouchableOpacity
-          onPress={() => setShowLogout(true)}
-          style={[styles.logoutBtn, { marginHorizontal: spacing[4], marginTop: spacing[4], borderColor: '#FCA5A5', backgroundColor: '#FEF2F2', borderRadius: radius.xl }]}
-        >
-          <AppIcon name="logout" color="#DC2626" size={18} />
-          <Text style={{ color: '#DC2626', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign Out</Text>
-        </TouchableOpacity>
+        {/* ── Account Management / Actions Section ── */}
+        <View style={[styles.section, { marginHorizontal: spacing[4], marginTop: spacing[4], backgroundColor: colors.surfaceElevated, borderColor: colors.border + '60', borderRadius: radius.xl, borderWidth: 1 }]}>
+          {/* Sign Out Row */}
+          <TouchableOpacity
+            onPress={() => setShowLogout(true)}
+            activeOpacity={0.7}
+            style={[styles.menuRow, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border + '40' }]}
+          >
+            <View style={[styles.menuIcon, { backgroundColor: '#EF444414', borderRadius: radius.lg }]}>
+              <AppIcon name="logout" color="#EF4444" size={20} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#EF4444', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign Out</Text>
+              <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs, marginTop: 2 }}>Sign out from this device</Text>
+            </View>
+            <AppIcon name="chevron-right" color={colors.textMuted} size={18} />
+          </TouchableOpacity>
 
-        {/* ── Delete Account ── */}
-        <TouchableOpacity
-          onPress={() => setShowDeleteModal(true)}
-          style={[styles.deleteAccountBtn, { marginHorizontal: spacing[4], marginTop: spacing[2], borderColor: colors.border, backgroundColor: colors.surface, borderRadius: radius.xl }]}
-        >
-          <AppIcon name="trash-can-outline" color="#DC2626" size={17} />
-          <Text style={{ color: '#DC2626', fontFamily: fontFamily.sansMedium, fontSize: fontSize.sm }}>Delete Account</Text>
-        </TouchableOpacity>
+          {/* Delete Account Row */}
+          <TouchableOpacity
+            onPress={() => setShowDeleteModal(true)}
+            activeOpacity={0.7}
+            style={styles.menuRow}
+          >
+            <View style={[styles.menuIcon, { backgroundColor: colors.surface, borderColor: colors.border + '70', borderWidth: 1, borderRadius: radius.lg }]}>
+              <AppIcon name="trash-can-outline" color="#9CA3AF" size={19} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansMedium, fontSize: fontSize.sm }}>Delete Account</Text>
+              <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, marginTop: 2 }}>Permanently erase account & data</Text>
+            </View>
+            <AppIcon name="chevron-right" color={colors.textMuted} size={18} />
+          </TouchableOpacity>
+        </View>
 
         {/* App version */}
         <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs, textAlign: 'center', marginTop: 24 }}>
@@ -202,11 +220,7 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', borderTopWidth: 1 },
   statItem: { flex: 1, paddingVertical: 14, alignItems: 'center' },
 
-  section: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
-  menuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
-  menuIcon: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-
-  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderWidth: 1 },
-  deleteAccountBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderWidth: 1 },
+  section: { overflow: 'hidden' },
+  menuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 14 },
+  menuIcon: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
 });
-

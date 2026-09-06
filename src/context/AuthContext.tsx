@@ -64,7 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updateUser = useCallback((partial: Partial<User>) => {
-    setUser(prev => (prev ? { ...prev, ...partial } : prev));
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...partial };
+      AsyncStorage.setItem(AUTH_KEY, JSON.stringify({ user: updated, token: updated.token })).catch(() => {});
+      return updated;
+    });
   }, []);
 
   const value = useMemo(

@@ -116,17 +116,31 @@ export function LoginScreen({ navigation: _navigation }: Props) {
     }
   };
 
+  const isB2bAccount = (userData: any): boolean => {
+    if (!userData) return false;
+    const role = Number(userData.userRole ?? userData.role ?? 0);
+    const roleName = String(userData.roleName ?? userData.role_name ?? userData.type ?? '').toLowerCase();
+    return role === 2 || roleName === 'b2b' || roleName === 'business';
+  };
+
   const handleRegister = async (accountType: 'retail' | 'b2b') => {
     const clean = sanitizePhone(phone);
     try {
       const res = await registerWithPhone({ phone: clean, accountType });
       const payload = (res.json as any)?.data;
       if (res.ok && payload?.user && payload?.token) {
+        if (isB2bAccount(payload.user)) {
+          setError('This mobile number is registered as a Business (B2B) account. Please use the Ethnic B2B App to sign in.');
+          setLoading(false);
+          otpRef.current?.reset();
+          return;
+        }
         await migrateCart(payload.user.id);
         await login(payload.user, payload.token);
         handleDismiss();
       } else {
-        setError((res.json as any).statusMessage || 'Registration failed. Please try again.');
+        const msg = (res.json as any)?.statusMessage || (res.json as any)?.message || 'Registration failed. Please try again.';
+        setError(msg);
         otpRef.current?.reset();
       }
     } catch {
@@ -144,6 +158,12 @@ export function LoginScreen({ navigation: _navigation }: Props) {
       const res = await verifyOtpRequest({ contactType: 'mobile', contactValue: clean, otpCode: otp, isLoginAuth: true });
       const payload = (res.json as any)?.data;
       if (res.ok && payload?.isExist && payload?.user && payload?.token) {
+        if (isB2bAccount(payload.user)) {
+          setError('This mobile number is registered as a Business (B2B) account. Please use the Ethnic B2B App to sign in.');
+          setLoading(false);
+          otpRef.current?.reset();
+          return;
+        }
         await migrateCart(payload.user.id);
         await login(payload.user, payload.token);
         handleDismiss();

@@ -18,35 +18,30 @@ type Props = {
   style?: ViewStyle;
 };
 
-function BackChevron({ color }: { color: string }) {
-  return (
-    <View style={styles.chevronWrap}>
-      <AppIcon name="chevron-left" color={color} size={22} />
-    </View>
-  );
-}
-
 export function PageHeader({ title, subtitle, onBack, actions = [], style }: Props) {
   const { theme } = useTheme();
-  const { colors, fontFamily, fontSize, radius, spacing } = theme;
+  const { colors, fontFamily, fontSize, radius } = theme;
+
+  const rightWidth = actions.length > 1 ? actions.length * 44 : 40;
 
   return (
     <View
       style={[
         styles.wrap,
         {
-          paddingHorizontal: spacing[5],
-          paddingTop: spacing[4],
-          paddingBottom: spacing[3],
           backgroundColor: colors.background,
+          borderBottomColor: colors.border,
         },
         style,
       ]}>
       <View style={styles.row}>
-        <View style={styles.side}>
+        {/* Left Back Button Slot */}
+        <View style={[styles.side, { width: rightWidth, alignItems: 'flex-start' }]}>
           {onBack ? (
             <TouchableOpacity
               onPress={onBack}
+              hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+              activeOpacity={0.7}
               accessibilityLabel="Go back"
               style={[
                 styles.iconBtn,
@@ -55,22 +50,28 @@ export function PageHeader({ title, subtitle, onBack, actions = [], style }: Pro
                   borderColor: colors.border,
                   borderRadius: radius.full,
                   shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 3,
+                  elevation: 2,
                 },
               ]}>
-              <BackChevron color={colors.textPrimary} />
+              <AppIcon name="chevron-left" color={colors.textPrimary} size={22} />
             </TouchableOpacity>
           ) : (
-            <View style={styles.placeholder} />
+            <View style={{ width: 40, height: 40 }} />
           )}
         </View>
 
+        {/* Center Title Slot */}
         <View style={styles.center}>
           <Text
             numberOfLines={1}
             style={{
               color: colors.textPrimary,
               fontFamily: fontFamily.sansBold,
-              fontSize: fontSize.lg,
+              fontSize: 17,
+              letterSpacing: 0.2,
               textAlign: 'center',
             }}>
             {title}
@@ -80,8 +81,8 @@ export function PageHeader({ title, subtitle, onBack, actions = [], style }: Pro
               numberOfLines={1}
               style={{
                 color: colors.textMuted,
-                fontFamily: fontFamily.sans,
-                fontSize: fontSize.xs,
+                fontFamily: fontFamily.sansMedium,
+                fontSize: 11.5,
                 marginTop: 2,
                 textAlign: 'center',
               }}>
@@ -90,32 +91,49 @@ export function PageHeader({ title, subtitle, onBack, actions = [], style }: Pro
           ) : null}
         </View>
 
-        <View style={styles.side}>
+        {/* Right Action Slot */}
+        <View style={[styles.side, { minWidth: 40, alignItems: 'flex-end' }]}>
           {actions.length > 0 ? (
             <View style={styles.actions}>
               {actions.map((action, idx) => (
                 <TouchableOpacity
                   key={`${action.label ?? 'action'}-${idx}`}
                   onPress={action.onPress}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  activeOpacity={0.7}
                   accessibilityLabel={action.accessibilityLabel ?? action.label}
-                  style={[
-                    styles.actionBtn,
-                    {
-                      backgroundColor: colors.surfaceElevated,
-                      borderColor: colors.border,
-                      borderRadius: radius.full,
-                    },
-                  ]}>
+                  style={
+                    action.icon
+                      ? [
+                        styles.iconBtn,
+                        {
+                          backgroundColor: colors.surfaceElevated,
+                          borderColor: colors.border,
+                          borderRadius: radius.full,
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.08,
+                          shadowRadius: 3,
+                          elevation: 2,
+                        },
+                      ]
+                      : [
+                        styles.textBtn,
+                        {
+                          backgroundColor: colors.primary + '14',
+                          borderColor: colors.primary + '30',
+                          borderRadius: radius.full,
+                        },
+                      ]
+                  }>
                   {action.icon ?? (action.label ? (
                     <Text
                       numberOfLines={1}
-                      ellipsizeMode="tail"
                       style={{
-                        color: colors.textPrimary,
-                        fontFamily: fontFamily.sansMedium,
-                        fontSize: fontSize.sm,
+                        color: colors.primary,
+                        fontFamily: fontFamily.sansBold,
+                        fontSize: 13,
                         textAlign: 'center',
-                        flexShrink: 1,
                       }}>
                       {action.label}
                     </Text>
@@ -124,7 +142,7 @@ export function PageHeader({ title, subtitle, onBack, actions = [], style }: Pro
               ))}
             </View>
           ) : (
-            <View style={styles.placeholder} />
+            <View style={{ width: 40, height: 40 }} />
           )}
         </View>
       </View>
@@ -133,35 +151,44 @@ export function PageHeader({ title, subtitle, onBack, actions = [], style }: Pro
 }
 
 const styles = StyleSheet.create({
-  wrap: {},
-  row: { flexDirection: 'row', alignItems: 'center', minHeight: 40 },
-  side: { width: 72, alignItems: 'center', justifyContent: 'center' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-  placeholder: { width: 42, height: 42 },
-  iconBtn: {
-    width: 42,
-    height: 42,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  actionBtn: {
-    minWidth: 72,
-    height: 42,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  wrap: {
     paddingHorizontal: 16,
-    maxWidth: 160,
-    overflow: 'hidden',
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  actions: { flexDirection: 'row', gap: 8 },
-  chevronWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+  },
+  side: {
+    justifyContent: 'center',
+  },
+  center: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textBtn: {
+    minHeight: 32,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
   },
 });

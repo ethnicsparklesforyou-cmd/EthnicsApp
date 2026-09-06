@@ -151,10 +151,10 @@ export function AddressesScreen({ navigation }: Props) {
   return (
     <Screen style={{ backgroundColor: colors.background }}>
       <PageHeader
-        title="Addresses"
+        title="Saved Addresses"
         subtitle={addresses.length > 0 ? `${addresses.length} saved address${addresses.length > 1 ? 'es' : ''}` : 'Manage delivery locations'}
         onBack={() => navigation.goBack()}
-        actions={[{ label: '+ Add', onPress: () => { resetForm(); setShowForm(true); }, accessibilityLabel: 'Add address' }]}
+        actions={[{ icon: <AppIcon name="plus" size={20} color={colors.textPrimary} />, onPress: () => { resetForm(); setShowForm(true); }, accessibilityLabel: 'Add address' }]}
       />
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 60 }} showsVerticalScrollIndicator={false}>

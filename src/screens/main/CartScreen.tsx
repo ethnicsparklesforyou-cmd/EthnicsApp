@@ -15,7 +15,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAddresses } from '../../services/address';
-import { fetchCartEstimation, fetchServerCart, normalizeCartEstimationResponse, removeFromServerCart } from '../../services/cart';
+import { fetchCartEstimation, fetchServerCart, normalizeCartEstimationResponse, removeFromServerCart, removeServerCartItemOrProduct } from '../../services/cart';
 import { getFirstImageUrl } from '../../utils/imageUtils';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { MainStackParamList } from '../../navigation/types';
@@ -75,7 +75,7 @@ function normalizeServerItems(res: any): any[] {
 }
 
 export function CartScreen({ navigation }: Props) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { colors, fontFamily, fontSize, spacing, radius } = theme;
   const { items: ctxItems, totalItems, updateQty, removeItem } = useCart();
   const { user, isAuthenticated } = useAuth();
@@ -193,7 +193,8 @@ export function CartScreen({ navigation }: Props) {
   const gstAmount = subtotal * gstRate / 100;
   const shipping = estimation?.shippingCharge ?? estimation?.deliveryEstimate?.freight_charge ?? 0;
   const shippingPartner = estimation?.shippingPartner ?? estimation?.deliveryEstimate?.courier_name ?? null;
-  const finalAmount = subtotal + gstAmount + shipping;
+  const effectiveShipping = hasAddress ? shipping : 0;
+  const finalAmount = subtotal + gstAmount + effectiveShipping;
 
   const handleRemove = (item: any) => {
     show({
@@ -203,11 +204,16 @@ export function CartScreen({ navigation }: Props) {
       actions: [
         { label: 'Cancel', onPress: () => {}, variant: 'outline' },
         { label: 'Remove', variant: 'danger', onPress: async () => {
-          pendingRemovals.current.add(String(item.id));
-          if (isAuthenticated && item.cartItemId) await removeFromServerCart(item.cartItemId).catch(() => {});
-          removeItem(item.productId);
-          setServerItems(prev => prev.filter(i => i.productId !== item.productId));
-          pendingRemovals.current.delete(String(item.id));
+          const pId = item.productId ?? item.id;
+          const strPid = String(pId);
+          pendingRemovals.current.add(strPid);
+          setServerItems(prev => prev.filter(i => String(i.productId) !== strPid && String(i.id) !== strPid));
+          removeItem(pId);
+          if (isAuthenticated && user?.id) {
+            const targetCartItemId = item.cartItemId ?? item.id;
+            await removeServerCartItemOrProduct(user.id, targetCartItemId, pId);
+          }
+          pendingRemovals.current.delete(strPid);
           void refreshEstimation(shippingPincode || undefined);
         }},
       ],
@@ -396,8 +402,8 @@ export function CartScreen({ navigation }: Props) {
               <SumRow label={`Subtotal (${optimisticTotalItems} items)`} value={`₹${subtotal.toLocaleString('en-IN')}`} colors={colors} fontFamily={fontFamily} fontSize={fontSize} />
               <SumRow label={`GST (${gstRate}%)`} value={`₹${gstAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`} colors={colors} fontFamily={fontFamily} fontSize={fontSize} />
               <SumRow
-                label={`Shipping${shippingPartner ? ` (${shippingPartner})` : ''}`}
-                value={!hasAddress ? 'Add address' : shipping === 0 ? 'Free' : `₹${shipping.toLocaleString('en-IN')}`}
+                label={`Shipping${shippingPartner && hasAddress ? ` (${shippingPartner})` : ''}`}
+                value={!hasAddress ? 'Calculated at checkout' : shipping === 0 ? 'Free' : `₹${shipping.toLocaleString('en-IN')}`}
                 valueColor={shipping === 0 && hasAddress ? '#16A34A' : undefined}
                 colors={colors} fontFamily={fontFamily} fontSize={fontSize}
               />
@@ -460,28 +466,51 @@ export function CartScreen({ navigation }: Props) {
               )}
             </>
 
-            <TouchableOpacity
-              onPress={() => {
-                if (!isAuthenticated) {
-                  navigation.getParent()?.navigate('Auth' as never);
-                  return;
-                }
-                if (isB2bUser && subtotal < B2B_MIN_ORDER) {
-                  show({ type: 'warning', title: 'Minimum Order Required', message: `B2B orders require a minimum of ₹${B2B_MIN_ORDER.toLocaleString('en-IN')}.` });
-                  return;
-                }
-                navigation.navigate('Checkout');
-              }}
-              style={[styles.checkoutBtn, {
-                backgroundColor: (isB2bUser && subtotal < B2B_MIN_ORDER) ? colors.border : colors.primary,
-                borderRadius: radius.xl,
-                marginTop: 16,
-                opacity: (isB2bUser && subtotal < B2B_MIN_ORDER) ? 0.6 : 1,
-              }]}>
-              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>
-                Proceed to Checkout
-              </Text>
-            </TouchableOpacity>
+            {(() => {
+              const isCheckoutDisabled = isB2bUser && subtotal < B2B_MIN_ORDER;
+              return (
+                <TouchableOpacity
+                  onPress={() => {
+                    if (!isAuthenticated) {
+                      navigation.getParent()?.navigate('Auth' as never);
+                      return;
+                    }
+                    if (isCheckoutDisabled) {
+                      show({
+                        type: 'warning',
+                        title: 'Minimum Order Required',
+                        message: `B2B orders require a minimum of ₹${B2B_MIN_ORDER.toLocaleString('en-IN')}.`,
+                      });
+                      return;
+                    }
+                    navigation.navigate('Checkout');
+                  }}
+                  activeOpacity={isCheckoutDisabled ? 0.8 : 0.85}
+                  style={[
+                    styles.checkoutBtn,
+                    {
+                      backgroundColor: isCheckoutDisabled
+                        ? (isDark ? '#2A2242' : '#EDE8F5')
+                        : colors.primary,
+                      borderRadius: radius.xl,
+                      marginTop: 16,
+                      borderWidth: isCheckoutDisabled ? 1 : 0,
+                      borderColor: isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(124, 58, 237, 0.15)',
+                    },
+                  ]}>
+                  <Text
+                    style={{
+                      color: isCheckoutDisabled
+                        ? (isDark ? '#94A3B8' : '#6B5E82')
+                        : '#FFFFFF',
+                      fontFamily: fontFamily.sansBold,
+                      fontSize: fontSize.base,
+                    }}>
+                    Proceed to Checkout
+                  </Text>
+                </TouchableOpacity>
+              );
+            })()}
 
             <TouchableOpacity
               onPress={() => navigation.navigate('HomeTabs', { screen: 'Shop' } as any)}

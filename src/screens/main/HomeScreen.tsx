@@ -46,44 +46,142 @@ const PROMO_ITEM_W = 240;
 const EDITORIAL_BANNERS = [
   {
     id: 'eb1',
-    tag: 'NEW SEASON',
+    tag: 'FASHION TRENDS',
     badge: 'EARRINGS',
     headline: 'Statement\nEarrings',
-    sub: 'Bold hoops & chandelier drops for every occasion',
+    sub: 'Trending drops, hoops & stylish studs for everyday glam',
     cta: 'Shop Earrings',
-    gradientTop: '#F3EEFF',
-    gradientBot: '#EDE4FF',
-    accent: '#7C3AED',
-    pill: '#7C3AED',
+    gradientTop: '#3B0764',
+    gradientBot: '#6B21A8',
+    accent: '#C084FC',
+    pill: '#EC4899',
     image: require('../../../assets/images/Earrings.jpeg'),
   },
   {
     id: 'eb2',
-    tag: 'BESTSELLER',
+    tag: 'DESIGNER PICKS',
     badge: 'RINGS',
-    headline: 'Solitaire &\nStack Rings',
-    sub: 'From everyday dainty to bridal statement',
+    headline: 'Trendy &\nStack Rings',
+    sub: 'Chic fashion rings and layered bands to match your outfits',
     cta: 'Explore Rings',
-    gradientTop: '#E8F8F2',
-    gradientBot: '#D4F0E6',
-    accent: '#059669',
-    pill: '#059669',
+    gradientTop: '#831843',
+    gradientBot: '#BE185D',
+    accent: '#F472B6',
+    pill: '#F59E0B',
     image: require('../../../assets/images/Ring.jpeg'),
   },
   {
     id: 'eb3',
-    tag: 'TRENDING',
+    tag: 'NEW ARRIVALS',
     badge: 'BRACELETS',
-    headline: 'Layer &\nStack Bracelets',
-    sub: 'Mix gold, silver & rose gold effortlessly',
+    headline: 'Charm &\nCuff Bracelets',
+    sub: 'Modern fashion bracelets and sleek everyday accessories',
     cta: 'Shop Bracelets',
-    gradientTop: '#FFF8EC',
-    gradientBot: '#FDEFD4',
-    accent: '#B5814A',
+    gradientTop: '#78350F',
+    gradientBot: '#B45309',
+    accent: '#FDE68A',
     pill: '#D97706',
     image: require('../../../assets/images/Bracelet.jpeg'),
   },
 ] as const;
+
+const CATEGORY_RING_COLORS = [
+  { border: '#7C3AED', shadow: '#7C3AED' }, // Royal Purple
+  { border: '#EC4899', shadow: '#EC4899' }, // Hot Rose Pink
+  { border: '#F59E0B', shadow: '#F59E0B' }, // 18K Amber Gold
+  { border: '#6366F1', shadow: '#6366F1' }, // Electric Violet
+  { border: '#E11D48', shadow: '#E11D48' }, // Ruby Rose
+  { border: '#06B6D4', shadow: '#06B6D4' }, // Cyan Jewel
+];
+
+function EditorialBannersSection({
+  banners,
+  goShop,
+  colors,
+  fontFamily,
+  spacing,
+  radius,
+  isDark,
+}: {
+  banners: typeof EDITORIAL_BANNERS;
+  goShop: (params?: any) => void;
+  colors: any;
+  fontFamily: any;
+  spacing: any;
+  radius: any;
+  isDark: boolean;
+}) {
+  return (
+    <View style={{ marginVertical: 14 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing[4], marginBottom: 12 }}>
+        <View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+            <AppIcon name="star-four-points" size={13} color="#EC4899" />
+            <Text style={{ color: '#EC4899', fontFamily: fontFamily.sansBold, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase' }}>
+              EDITORIAL SHOWCASE
+            </Text>
+          </View>
+          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 22, letterSpacing: -0.4 }}>
+            Signature Collections
+          </Text>
+        </View>
+      </View>
+
+      <FlatList
+        data={banners}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: spacing[4], gap: 14 }}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            onPress={() => goShop()}
+            activeOpacity={0.92}
+            style={{
+              width: W * 0.82,
+              height: 156,
+              borderRadius: 22,
+              backgroundColor: item.gradientTop,
+              flexDirection: 'row',
+              overflow: 'hidden',
+              shadowColor: item.accent,
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.35,
+              shadowRadius: 10,
+              elevation: 5,
+              borderWidth: 1.2,
+              borderColor: 'rgba(255,255,255,0.15)',
+            }}
+          >
+            {/* Left Column with rich text & gradient CTA */}
+            <View style={{ flex: 1.15, padding: 16, justifyContent: 'space-between' }}>
+              <View>
+                <View style={{ backgroundColor: item.pill, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 6 }}>
+                  <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 1.2 }}>
+                    {item.tag}
+                  </Text>
+                </View>
+                <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 17, lineHeight: 21 }}>
+                  {item.headline}
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, alignSelf: 'flex-start', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' }}>
+                <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 11 }}>{item.cta}</Text>
+                <AppIcon name="arrow-right" size={12} color="#FFFFFF" />
+              </View>
+            </View>
+
+            {/* Right Column Image */}
+            <View style={{ flex: 0.85, height: '100%' }}>
+              <Image source={item.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+}
 
 const VIBE_CHIPS = [
   { id: 'v1', label: 'Minimalist', icon: 'circle-outline', color: '#6C63FF' },
@@ -107,12 +205,7 @@ const PROMO_ITEMS = [
   {
     icon: 'shield-check-outline',
     title: 'Anti-Tarnish Polish',
-    subtitle: 'trusted quality & shine',
-  },
-  {
-    icon: 'refresh',
-    title: '7-Day Returns',
-    subtitle: 'easy exchange',
+    subtitle: 'trusted quality',
   },
 ] as const;
 
@@ -146,6 +239,13 @@ function getCategorySource(cat: any, index: number) {
   return fallbackImages[index % fallbackImages.length];
 }
 
+function getGreeting() {
+  const hr = new Date().getHours();
+  if (hr < 12) return 'Good Morning,';
+  if (hr < 17) return 'Good Afternoon,';
+  return 'Good Evening,';
+}
+
 function PromoMarquee({ fontFamily, isDark }: { fontFamily: any; isDark: boolean }) {
   const translateX = useRef(new Animated.Value(0)).current;
 
@@ -172,12 +272,12 @@ function PromoMarquee({ fontFamily, isDark }: { fontFamily: any; isDark: boolean
         {repeatedItems.map((item, idx) => (
           <View key={`${item.title}-${idx}`} style={[styles.marqueeItem, { width: PROMO_ITEM_W }]}>
             <View style={[styles.marqueeIconWrap, isDark && styles.marqueeIconWrapDark]}>
-              <AppIcon name={item.icon as any} color={isDark ? '#D4A574' : '#B5814A'} size={15} />
+              <AppIcon name={item.icon as any} color={isDark ? '#EC4899' : '#7C3AED'} size={14} />
             </View>
-            <Text style={{ color: isDark ? '#E8E8F0' : '#3D2B1A', fontFamily: fontFamily.sansBold, fontSize: 12.5, letterSpacing: 0.1 }}>
+            <Text style={{ color: isDark ? '#FFFFFF' : '#1E1430', fontFamily: fontFamily.sansBold, fontSize: 12.5, letterSpacing: 0.2 }}>
               {item.title}
             </Text>
-            <Text style={{ color: isDark ? '#606070' : '#A89880', fontFamily: fontFamily.sans, fontSize: 10 }}>
+            <Text style={{ color: isDark ? '#A78BFA' : '#7C3AED', fontFamily: fontFamily.sansMedium, fontSize: 10.5 }}>
               · {item.subtitle}
             </Text>
           </View>
@@ -189,8 +289,134 @@ function PromoMarquee({ fontFamily, isDark }: { fontFamily: any; isDark: boolean
 
 
 
-// Helper component for swiping choice
-// ── Ad Modal (Tinder Style) ──
+// ── Memoized Discovery Product Card Component ──
+const DiscoveryCard = React.memo(function DiscoveryCard({
+  item,
+  isDark,
+  fontFamily,
+  colors,
+  cardWidth,
+  cardHeight,
+  onPress,
+}: {
+  item: any;
+  isDark: boolean;
+  fontFamily: any;
+  colors: any;
+  cardWidth: number;
+  cardHeight: number;
+  onPress: () => void;
+}) {
+  const uri = item.images?.[0]?.imageUrl || item.imageUrl || null;
+  const rawB2b = item.b2bPrice ? parseFloat(item.b2bPrice) : 0;
+  const rawBase = parseFloat(item.basePrice || item.price || '0');
+  const rawDiscount = parseFloat(item.discountPrice || '0');
+
+  const finalPrice = rawB2b > 0 ? rawB2b : (rawBase - rawDiscount);
+  const price = rawBase > 0 ? rawBase : finalPrice;
+  const discountPrice = rawDiscount;
+  const discountPercent = (price > finalPrice && price > 0) ? Math.round(((price - finalPrice) / price) * 100) : 0;
+  const categoryName = item.category?.name || item.categoryName || 'Jewellery';
+
+  return (
+    <View
+      style={{
+        width: cardWidth,
+        height: cardHeight,
+        borderRadius: 24,
+        overflow: 'hidden',
+        backgroundColor: isDark ? '#1C1929' : '#FFFFFF',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
+        borderWidth: 1,
+      }}
+    >
+      {/* Product Image */}
+      {uri ? (
+        <Image
+          source={{ uri }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          fadeDuration={0}
+        />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? '#232034' : '#F7F5FA', alignItems: 'center', justifyContent: 'center' }]}>
+          <AppIcon name="diamond-stone" size={56} color={colors.primary} />
+        </View>
+      )}
+
+      {/* Top Badges */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+        }}
+      >
+        <View style={{ backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+          <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 10.5, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+            {categoryName}
+          </Text>
+        </View>
+
+        {discountPercent > 0 && (
+          <View style={{ backgroundColor: '#E11D48', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 14 }}>
+            <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 0.5 }}>
+              {discountPercent}% OFF
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Bottom Info Bar */}
+      <TouchableOpacity
+        activeOpacity={0.92}
+        onPress={onPress}
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: isDark ? 'rgba(18, 16, 26, 0.94)' : 'rgba(20, 18, 28, 0.86)',
+          paddingHorizontal: 18,
+          paddingTop: 14,
+          paddingBottom: 16,
+          borderBottomLeftRadius: 24,
+          borderBottomRightRadius: 24,
+          borderTopWidth: 1,
+          borderColor: 'rgba(255,255,255,0.12)',
+        }}
+      >
+        <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 18 }} numberOfLines={1}>
+          {item.name || 'Ethnic Jewellery Piece'}
+        </Text>
+
+        <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 5 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+            <Text style={{ color: colors.gold || '#FBBF24', fontFamily: fontFamily.sansBold, fontSize: 18 }}>
+              ₹{finalPrice.toLocaleString('en-IN')}
+            </Text>
+            {discountPrice > 0 && (
+              <Text style={{ color: 'rgba(255,255,255,0.5)', fontFamily: fontFamily.sans, fontSize: 12, textDecorationLine: 'line-through' }}>
+                ₹{price.toLocaleString('en-IN')}
+              </Text>
+            )}
+          </View>
+          <Text style={{ color: 'rgba(255,255,255,0.7)', fontFamily: fontFamily.sansMedium, fontSize: 11.5 }}>
+            Tap to inspect →
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+});
+
+// ── Ad Modal (Clean & Seamless Style Match Discovery) ──
 function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, products, goProduct, isDark }: {
   visible: boolean; onClose: () => void;
   colors: any; fontFamily: any; fontSize: any; radius: any;
@@ -198,14 +424,40 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
   isDark: boolean;
 }) {
   const { toggle } = useWishlist();
-  const slideY = useRef(new Animated.Value(Dimensions.get('window').height)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const screenDims = Dimensions.get('window');
+  const W_MODAL = screenDims.width;
+  const H_MODAL = screenDims.height;
+  const CARD_W = Math.min(W_MODAL * 0.90, 400);
+  const CARD_H = Math.min(H_MODAL * 0.58, 510);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [deckProducts, setDeckProducts] = useState<any[]>([]);
+  const [exitingCard, setExitingCard] = useState<{
+    item: any;
+    direction: 'left' | 'right';
+    anim: Animated.ValueXY;
+  } | null>(null);
+
   const pageRef = useRef(1);
   const hasMoreRef = useRef(true);
   const isFetchingRef = useRef(false);
   const seenIdsRef = useRef(new Set<string>());
+  const isSwipingRef = useRef(false);
+
+  // Dedicated button press scales
+  const dislikeBtnScale = useRef(new Animated.Value(1)).current;
+  const likeBtnScale = useRef(new Animated.Value(1)).current;
+
+  // Active top card interactive pan & transition drivers
+  const topCardAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+  const exitAnim = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+
+  const animateBtnPress = (animValue: Animated.Value) => {
+    Animated.sequence([
+      Animated.timing(animValue, { toValue: 0.85, duration: 80, useNativeDriver: true }),
+      Animated.spring(animValue, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }),
+    ]).start();
+  };
 
   const extractProducts = (res: any): any[] => {
     if (!res) return [];
@@ -213,6 +465,7 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
     if (Array.isArray(res.data)) return res.data;
     if (Array.isArray(res.products)) return res.products;
     if (Array.isArray(res?.data?.products)) return res.data.products;
+    if (Array.isArray(res?.data?.data?.products)) return res.data.data.products;
     if (Array.isArray(res?.result?.products)) return res.result.products;
     if (Array.isArray(res?.data?.items)) return res.data.items;
     if (Array.isArray(res?.result)) return res.result;
@@ -257,15 +510,13 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
   useEffect(() => {
     if (visible) {
       setCurrentIndex(0);
+      setExitingCard(null);
       pageRef.current = 1;
       hasMoreRef.current = true;
       isFetchingRef.current = false;
       seenIdsRef.current.clear();
-
-      Animated.parallel([
-        Animated.timing(slideY, { toValue: 0, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-        Animated.timing(backdropOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-      ]).start();
+      topCardAnim.setValue({ x: 0, y: 0 });
+      exitAnim.setValue({ x: 0, y: 0 });
 
       if (products && products.length > 0) {
         const inStock = products.filter((p: any) => p && p.id && (p.stockQuantity === undefined || p.stockQuantity === null || Number(p.stockQuantity) > 0));
@@ -277,334 +528,512 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
             initialUniques.push(p);
           }
         });
-        setDeckProducts(initialUniques);
+        if (initialUniques.length > 0) {
+          setDeckProducts(initialUniques);
+        }
       }
       fetchMoreDeckProducts(1);
-    } else {
-      Animated.parallel([
-        Animated.timing(slideY, { toValue: Dimensions.get('window').height, duration: 350, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
-        Animated.timing(backdropOpacity, { toValue: 0, duration: 250, useNativeDriver: true }),
-      ]).start();
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (products && products.length > 0 && deckProducts.length === 0) {
+      const inStock = products.filter((p: any) => p && p.id && (p.stockQuantity === undefined || p.stockQuantity === null || Number(p.stockQuantity) > 0));
+      const initialUniques: any[] = [];
+      inStock.forEach((p: any) => {
+        const key = String(p.id);
+        if (!seenIdsRef.current.has(key)) {
+          seenIdsRef.current.add(key);
+          initialUniques.push(p);
+        }
+      });
+      if (initialUniques.length > 0) {
+        setDeckProducts(initialUniques);
+      }
+    }
+  }, [products]);
 
   // Image pre-fetching for instant, zero-delay card reveals
   useEffect(() => {
     if (deckProducts.length > currentIndex) {
-      const upcoming = deckProducts.slice(currentIndex, currentIndex + 6);
+      const upcoming = deckProducts.slice(currentIndex, currentIndex + 10);
       upcoming.forEach(item => {
         const uri = item.images?.[0]?.imageUrl || item.imageUrl;
         if (uri && typeof uri === 'string') {
-          Image.prefetch(uri).catch(() => {});
+          Image.prefetch(uri).catch(() => { });
         }
       });
     }
   }, [currentIndex, deckProducts]);
 
   const checkPagination = useCallback((nextIdx: number) => {
-    if (nextIdx >= deckProducts.length - 5) {
+    if (nextIdx >= deckProducts.length - 6) {
       fetchMoreDeckProducts();
     }
   }, [deckProducts.length]);
-
-  const isSwipingRef = useRef(false);
-  const pan = useRef(new Animated.ValueXY()).current;
-  const W_MODAL = Dimensions.get('window').width;
 
   const deckStateRef = useRef({ currentIndex, deckProducts, toggle, checkPagination, onClose, goProduct });
   useEffect(() => {
     deckStateRef.current = { currentIndex, deckProducts, toggle, checkPagination, onClose, goProduct };
   }, [currentIndex, deckProducts, toggle, checkPagination, onClose, goProduct]);
 
-  const handleSwipeComplete = useCallback((direction: 'left' | 'right') => {
-    const { currentIndex: cIdx, deckProducts: dProds, toggle: tog, checkPagination: checkPag } = deckStateRef.current;
-    const currentProduct = dProds[cIdx];
-    if (direction === 'right' && currentProduct?.id) {
-      tog(currentProduct.id).catch(() => {});
-    }
-
-    const nextIdx = cIdx + 1;
-    pan.setValue({ x: 0, y: 0 });
-    setCurrentIndex(nextIdx);
-    checkPag(nextIdx);
-    isSwipingRef.current = false;
-  }, [pan]);
-
-  const triggerSwipe = useCallback((direction: 'left' | 'right') => {
+  // Butter-Smooth Native Swipe (Zero snap-back, independent exiting animation)
+  const performSwipe = useCallback((direction: 'left' | 'right', startX: number = 0, startY: number = 0) => {
     if (isSwipingRef.current) return;
     const { currentIndex: cIdx, deckProducts: dProds } = deckStateRef.current;
     if (cIdx >= dProds.length) return;
     isSwipingRef.current = true;
 
+    if (direction === 'left') {
+      animateBtnPress(dislikeBtnScale);
+    } else {
+      animateBtnPress(likeBtnScale);
+    }
+
+    const currentItem = dProds[cIdx];
+    if (direction === 'right' && currentItem?.id) {
+      deckStateRef.current.toggle(currentItem.id).catch(() => { });
+    }
+
     const toX = direction === 'right' ? W_MODAL * 1.5 : -W_MODAL * 1.5;
-    Animated.timing(pan, {
-      toValue: { x: toX, y: 0 },
+    const toY = startY + (direction === 'right' ? 12 : -12);
+
+    // Position exiting card exactly at current coordinate & trigger state change
+    exitAnim.setValue({ x: startX, y: startY });
+    setExitingCard({ item: currentItem, direction, anim: exitAnim });
+
+    // Reset top card animation and increment deck index
+    topCardAnim.setValue({ x: 0, y: 0 });
+    const nextIdx = cIdx + 1;
+    setCurrentIndex(nextIdx);
+    deckStateRef.current.checkPagination(nextIdx);
+
+    // Animate exiting card smoothly off-screen with native thread
+    Animated.timing(exitAnim, {
+      toValue: { x: toX, y: toY },
       duration: 220,
       easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start(() => {
-      handleSwipeComplete(direction);
+      setExitingCard(null);
+      isSwipingRef.current = false;
     });
-  }, [W_MODAL, handleSwipeComplete, pan]);
+  }, [W_MODAL, dislikeBtnScale, likeBtnScale, topCardAnim, exitAnim]);
+
+  const triggerSwipe = useCallback((direction: 'left' | 'right') => {
+    performSwipe(direction, 0, 0);
+  }, [performSwipe]);
 
   const panResponder = useMemo(() =>
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => false,
       onStartShouldSetPanResponderCapture: () => false,
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
+        return Math.abs(gestureState.dx) > 6 || Math.abs(gestureState.dy) > 6;
       },
       onMoveShouldSetPanResponderCapture: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 3 || Math.abs(gestureState.dy) > 3;
+        return Math.abs(gestureState.dx) > 6 || Math.abs(gestureState.dy) > 6;
       },
       onPanResponderGrant: () => {
         if (isSwipingRef.current) return;
-        pan.setValue({ x: 0, y: 0 });
+        topCardAnim.setValue({ x: 0, y: 0 });
       },
       onPanResponderMove: (_, gestureState) => {
         if (isSwipingRef.current) return;
-        pan.setValue({ x: gestureState.dx, y: gestureState.dy });
+        topCardAnim.setValue({ x: gestureState.dx, y: gestureState.dy });
       },
       onPanResponderRelease: (_, gestureState) => {
         if (isSwipingRef.current) return;
-        const isRightSwipe = gestureState.dx > 65 || gestureState.vx > 0.35;
-        const isLeftSwipe = gestureState.dx < -65 || gestureState.vx < -0.35;
+        const isRightSwipe = gestureState.dx > 80 || gestureState.vx > 0.4;
+        const isLeftSwipe = gestureState.dx < -80 || gestureState.vx < -0.4;
 
         if (isRightSwipe) {
-          isSwipingRef.current = true;
-          Animated.timing(pan, {
-            toValue: { x: W_MODAL * 1.5, y: gestureState.dy },
-            duration: 200,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: false,
-          }).start(() => {
-            handleSwipeComplete('right');
-          });
+          performSwipe('right', gestureState.dx, gestureState.dy);
         } else if (isLeftSwipe) {
-          isSwipingRef.current = true;
-          Animated.timing(pan, {
-            toValue: { x: -W_MODAL * 1.5, y: gestureState.dy },
-            duration: 200,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: false,
-          }).start(() => {
-            handleSwipeComplete('left');
-          });
+          performSwipe('left', gestureState.dx, gestureState.dy);
         } else {
-          Animated.spring(pan, {
+          Animated.spring(topCardAnim, {
             toValue: { x: 0, y: 0 },
-            friction: 6,
-            tension: 80,
-            useNativeDriver: false,
+            friction: 7,
+            tension: 90,
+            useNativeDriver: true,
           }).start();
         }
       },
       onPanResponderTerminate: () => {
         if (!isSwipingRef.current) {
-          Animated.spring(pan, {
+          Animated.spring(topCardAnim, {
             toValue: { x: 0, y: 0 },
-            friction: 6,
-            tension: 80,
-            useNativeDriver: false,
+            friction: 7,
+            tension: 90,
+            useNativeDriver: true,
           }).start();
         }
       },
     }),
-    [W_MODAL, handleSwipeComplete, pan]
+    [performSwipe, topCardAnim]
   );
 
-  const renderCards = () => {
-    const visibleDeck = deckProducts.slice(currentIndex, currentIndex + 3);
+  const nextCardScale = topCardAnim.x.interpolate({
+    inputRange: [-W_MODAL * 0.75, 0, W_MODAL * 0.75],
+    outputRange: [1, 0.94, 1],
+    extrapolate: 'clamp',
+  });
 
-    return visibleDeck.map((item, offsetIdx) => {
-      const isTop = offsetIdx === 0;
-      const isSecond = offsetIdx === 1;
-      const uri = item.images?.[0]?.imageUrl || item.imageUrl || null;
-      const price = parseFloat(item.basePrice || item.price || '0');
-      const discountPrice = parseFloat(item.discountPrice || '0');
-      const finalPrice = discountPrice > 0 ? price - discountPrice : price;
+  const nextCardTranslateY = topCardAnim.x.interpolate({
+    inputRange: [-W_MODAL * 0.75, 0, W_MODAL * 0.75],
+    outputRange: [0, 14, 0],
+    extrapolate: 'clamp',
+  });
 
-      let cardStyle: any = {
-        position: 'absolute',
-        width: Math.min(W_MODAL * 0.88, 380),
-        height: 440,
-        backgroundColor: isDark ? '#181622' : '#FFFFFF',
-        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-        borderWidth: 1,
-        borderRadius: 24,
-        overflow: 'hidden',
-        alignSelf: 'center',
-        top: 0,
-        elevation: isTop ? 10 : isSecond ? 5 : 2,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: isTop ? 8 : 4 },
-        shadowOpacity: isTop ? 0.22 : 0.08,
-        shadowRadius: isTop ? 14 : 6,
-      };
+  const nextCardOpacity = topCardAnim.x.interpolate({
+    inputRange: [-W_MODAL * 0.75, 0, W_MODAL * 0.75],
+    outputRange: [1, 0.92, 1],
+    extrapolate: 'clamp',
+  });
 
-      if (isTop) {
-        cardStyle.transform = [
-          { translateX: pan.x },
-          { translateY: pan.y },
-          {
-            rotate: pan.x.interpolate({
-              inputRange: [-W_MODAL, 0, W_MODAL],
-              outputRange: ['-18deg', '0deg', '18deg'],
-              extrapolate: 'clamp',
-            }),
-          },
-        ];
-      } else if (isSecond) {
-        const scaleSecondCard = pan.x.interpolate({
-          inputRange: [-W_MODAL / 2, 0, W_MODAL / 2],
-          outputRange: [1, 0.94, 1],
-          extrapolate: 'clamp',
-        });
-        const translateYSecondCard = pan.x.interpolate({
-          inputRange: [-W_MODAL / 2, 0, W_MODAL / 2],
-          outputRange: [0, 16, 0],
-          extrapolate: 'clamp',
-        });
-        cardStyle.transform = [
-          { scale: scaleSecondCard },
-          { translateY: translateYSecondCard },
-        ];
-        cardStyle.opacity = 0.95;
-      } else {
-        cardStyle.transform = [
-          { scale: 0.88 },
-          { translateY: 30 },
-        ];
-        cardStyle.opacity = 0.7;
-      }
+  const topCardOpacity = topCardAnim.x.interpolate({
+    inputRange: [-W_MODAL * 1.2, -W_MODAL * 0.35, 0, W_MODAL * 0.35, W_MODAL * 1.2],
+    outputRange: [0, 1, 1, 1, 0],
+    extrapolate: 'clamp',
+  });
 
-      const likeOpacity = isTop ? pan.x.interpolate({
-        inputRange: [0, W_MODAL / 4],
-        outputRange: [0, 1],
-        extrapolate: 'clamp',
-      }) : 0;
+  const topCardRotate = topCardAnim.x.interpolate({
+    inputRange: [-W_MODAL, 0, W_MODAL],
+    outputRange: ['-14deg', '0deg', '14deg'],
+    extrapolate: 'clamp',
+  });
 
-      const nopeOpacity = isTop ? pan.x.interpolate({
-        inputRange: [-W_MODAL / 4, 0],
-        outputRange: [1, 0],
-        extrapolate: 'clamp',
-      }) : 0;
+  const likeBadgeOpacity = topCardAnim.x.interpolate({
+    inputRange: [0, 30, 90],
+    outputRange: [0, 0.4, 1],
+    extrapolate: 'clamp',
+  });
 
-      return (
-        <Animated.View
-          key={item.id}
-          style={cardStyle}
-          {...(isTop ? panResponder.panHandlers : {})}
-        >
-          {uri ? (
-            <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.surfaceElevated, alignItems: 'center', justifyContent: 'center' }]}>
-              <AppIcon name="diamond-stone" size={48} color={colors.primary} />
-            </View>
-          )}
+  const dislikeBadgeOpacity = topCardAnim.x.interpolate({
+    inputRange: [-90, -30, 0],
+    outputRange: [1, 0.4, 0],
+    extrapolate: 'clamp',
+  });
 
-          {/* Bottom Card Info Overlay */}
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => {
-              if (item.id) {
-                onClose();
-                goProduct(item.id);
-              }
-            }}
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: 'rgba(0,0,0,0.65)',
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              borderBottomLeftRadius: 24,
-              borderBottomRightRadius: 24,
-            }}
-          >
-            <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 17 }} numberOfLines={1}>
-              {item.name || 'Ethnic Jewellery'}
-            </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-                <Text style={{ color: colors.gold || '#F59E0B', fontFamily: fontFamily.sansBold, fontSize: 15 }}>
-                  ₹{finalPrice.toLocaleString('en-IN')}
-                </Text>
-                {discountPrice > 0 && (
-                  <Text style={{ color: 'rgba(255,255,255,0.6)', fontFamily: fontFamily.sans, fontSize: 11, textDecorationLine: 'line-through' }}>
-                    ₹{price.toLocaleString('en-IN')}
-                  </Text>
-                )}
-              </View>
-              <Text style={{ color: 'rgba(255,255,255,0.8)', fontFamily: fontFamily.sansMedium, fontSize: 11 }}>
-                Tap to View →
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Stamps */}
-          {isTop && (
-            <>
-              <Animated.View style={{ position: 'absolute', top: 28, left: 20, transform: [{ rotate: '-18deg' }], opacity: likeOpacity, borderColor: '#4CAF50', borderWidth: 3.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.92)' }}>
-                <Text style={{ color: '#4CAF50', fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: 2 }}>LIKE</Text>
-              </Animated.View>
-              <Animated.View style={{ position: 'absolute', top: 28, right: 20, transform: [{ rotate: '18deg' }], opacity: nopeOpacity, borderColor: '#FF5C6C', borderWidth: 3.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 4, backgroundColor: 'rgba(255,255,255,0.92)' }}>
-                <Text style={{ color: '#FF5C6C', fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: 2 }}>NOPE</Text>
-              </Animated.View>
-            </>
-          )}
-        </Animated.View>
-      );
-    }).reverse();
-  };
+  const nextCardItem = deckProducts[currentIndex + 1];
+  const topCardItem = deckProducts[currentIndex];
 
   return (
     <Modal transparent visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.75)' }]} />
-      <Animated.View style={{ position: 'absolute', left: 0, right: 0, backgroundColor: colors.background, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, height: '88%', top: '12%', paddingTop: 12, transform: [{ translateY: slideY }], opacity: backdropOpacity }}>
+      <View style={StyleSheet.absoluteFill}>
+        {/* Dark Backdrop */}
+        <TouchableOpacity
+          style={StyleSheet.absoluteFill}
+          activeOpacity={1}
+          onPress={onClose}
+        >
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.65)' }]} />
+        </TouchableOpacity>
 
-        {/* Header */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, marginTop: 16 }}>
-          <View style={{ backgroundColor: colors.primary + '15', borderColor: colors.primary + '30', borderWidth: 1, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 }}>
-            <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 2 }}>STYLE MATCH</Text>
+        {/* Bottom Sheet Container */}
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: colors.background,
+            borderTopLeftRadius: 32,
+            borderTopRightRadius: 32,
+            height: Math.min(H_MODAL * 0.86, 730),
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -6 },
+            shadowOpacity: 0.25,
+            shadowRadius: 18,
+            elevation: 20,
+          }}
+        >
+          {/* Top Drag Indicator */}
+          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
+            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.18)' }} />
           </View>
-          <TouchableOpacity onPress={onClose} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <AppIcon name="close" size={20} color={colors.textMuted} />
-          </TouchableOpacity>
-        </View>
 
-        {/* Heading */}
-        <View style={{ paddingHorizontal: 24, marginTop: 12 }}>
-          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: -0.5 }}>
-            Curate Your Collection
-          </Text>
-          <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 13, marginTop: 4, lineHeight: 18 }}>
-            Swipe right on pieces you love to personalize your feed and save to your style profile!
-          </Text>
-        </View>
-
-        <View style={{ flex: 1, marginTop: 20 }}>
-          {currentIndex < deckProducts.length ? renderCards() : (
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-              <ActivityIndicator color={colors.primary} size="large" />
-              <Text style={{ textAlign: 'center', color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 13, marginTop: 12 }}>Loading more styles...</Text>
+          {/* Modal Header */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 22, paddingTop: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: isDark ? 'rgba(124, 58, 237, 0.18)' : '#F5EEFF', borderColor: isDark ? 'rgba(192, 132, 252, 0.35)' : 'rgba(124, 58, 237, 0.20)', borderWidth: 1, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 16 }}>
+              <AppIcon name="star-four-points" size={11} color={isDark ? '#C084FC' : '#7C3AED'} />
+              <Text style={{ color: isDark ? '#C084FC' : '#7C3AED', fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 1.5 }}>
+                STYLE MATCH
+              </Text>
             </View>
-          )}
-        </View>
 
-        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 40, marginBottom: 40 }}>
-          <TouchableOpacity onPress={() => triggerSwipe('left')} style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#FFF', elevation: 4, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 }}>
-            <AppIcon name="close" size={30} color="#FF5C6C" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => triggerSwipe('right')} style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#FFF', elevation: 4, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 }}>
-            <AppIcon name="heart" size={30} color="#4CAF50" />
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+              style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: isDark ? '#262335' : '#F0EEF5', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <AppIcon name="close" size={17} color={colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
 
-      </Animated.View>
+          {/* Card Deck Area */}
+          <View style={{ flex: 1, marginTop: 16, alignItems: 'center', justifyContent: 'center' }}>
+            {deckProducts.length === 0 ? (
+              <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 60 }}>
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sansMedium, fontSize: 13, marginTop: 14 }}>
+                  Curating styles for you...
+                </Text>
+              </View>
+            ) : currentIndex < deckProducts.length ? (
+              <View style={{ width: CARD_W, height: CARD_H }}>
+                {/* ── Background Card (Smoothly scales & slides up) ── */}
+                {nextCardItem && (
+                  <Animated.View
+                    key={`bg-${nextCardItem.id}`}
+                    style={{
+                      position: 'absolute',
+                      width: CARD_W,
+                      height: CARD_H,
+                      alignSelf: 'center',
+                      top: 0,
+                      zIndex: 1,
+                      transform: [
+                        { scale: nextCardScale },
+                        { translateY: nextCardTranslateY },
+                      ],
+                      opacity: nextCardOpacity,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 8,
+                      elevation: 3,
+                    }}
+                  >
+                    <DiscoveryCard
+                      item={nextCardItem}
+                      isDark={isDark}
+                      fontFamily={fontFamily}
+                      colors={colors}
+                      cardWidth={CARD_W}
+                      cardHeight={CARD_H}
+                      onPress={() => {
+                        if (nextCardItem.id) {
+                          onClose();
+                          goProduct(nextCardItem.id);
+                        }
+                      }}
+                    />
+                  </Animated.View>
+                )}
+
+                {/* ── Active Top Card (Smooth Gesture & Dismiss Animation) ── */}
+                {topCardItem && (
+                  <Animated.View
+                    key={`top-${topCardItem.id}`}
+                    {...panResponder.panHandlers}
+                    style={{
+                      position: 'absolute',
+                      width: CARD_W,
+                      height: CARD_H,
+                      alignSelf: 'center',
+                      top: 0,
+                      zIndex: 2,
+                      transform: [
+                        { translateX: topCardAnim.x },
+                        { translateY: topCardAnim.y },
+                        { rotate: topCardRotate },
+                      ],
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 8 },
+                      shadowOpacity: 0.18,
+                      shadowRadius: 14,
+                      elevation: 8,
+                    }}
+                  >
+                    <DiscoveryCard
+                      item={topCardItem}
+                      isDark={isDark}
+                      fontFamily={fontFamily}
+                      colors={colors}
+                      cardWidth={CARD_W}
+                      cardHeight={CARD_H}
+                      onPress={() => {
+                        if (topCardItem.id) {
+                          onClose();
+                          goProduct(topCardItem.id);
+                        }
+                      }}
+                    />
+
+                    {/* Like / Wishlist Badge Tag Overlay */}
+                    <Animated.View
+                      style={{
+                        position: 'absolute',
+                        top: 24,
+                        right: 24,
+                        transform: [{ rotate: '12deg' }],
+                        opacity: likeBadgeOpacity,
+                        backgroundColor: 'rgba(236, 72, 153, 0.92)',
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 12,
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF',
+                      }}
+                      pointerEvents="none"
+                    >
+                      <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 16, letterSpacing: 1.5 }}>
+                        LIKE
+                      </Text>
+                    </Animated.View>
+
+                    {/* Dislike / Pass Badge Tag Overlay */}
+                    <Animated.View
+                      style={{
+                        position: 'absolute',
+                        top: 24,
+                        left: 24,
+                        transform: [{ rotate: '-12deg' }],
+                        opacity: dislikeBadgeOpacity,
+                        backgroundColor: 'rgba(100, 116, 139, 0.92)',
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 12,
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF',
+                      }}
+                      pointerEvents="none"
+                    >
+                      <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 16, letterSpacing: 1.5 }}>
+                        PASS
+                      </Text>
+                    </Animated.View>
+                  </Animated.View>
+                )}
+
+                {/* ── Exiting Ghost Card (Dedicated native exiting trajectory) ── */}
+                {exitingCard && (
+                  <Animated.View
+                    key={`exit-${exitingCard.item.id}`}
+                    style={{
+                      position: 'absolute',
+                      width: CARD_W,
+                      height: CARD_H,
+                      alignSelf: 'center',
+                      top: 0,
+                      zIndex: 3,
+                      opacity: exitAnim.x.interpolate({
+                        inputRange: [-W_MODAL * 1.2, 0, W_MODAL * 1.2],
+                        outputRange: [0, 1, 0],
+                        extrapolate: 'clamp',
+                      }),
+                      transform: [
+                        { translateX: exitAnim.x },
+                        { translateY: exitAnim.y },
+                        {
+                          rotate: exitAnim.x.interpolate({
+                            inputRange: [-W_MODAL, 0, W_MODAL],
+                            outputRange: ['-14deg', '0deg', '14deg'],
+                            extrapolate: 'clamp',
+                          }),
+                        },
+                      ],
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 10 },
+                      shadowOpacity: 0.22,
+                      shadowRadius: 16,
+                      elevation: 10,
+                    }}
+                    pointerEvents="none"
+                  >
+                    <DiscoveryCard
+                      item={exitingCard.item}
+                      isDark={isDark}
+                      fontFamily={fontFamily}
+                      colors={colors}
+                      cardWidth={CARD_W}
+                      cardHeight={CARD_H}
+                      onPress={() => { }}
+                    />
+                  </Animated.View>
+                )}
+              </View>
+            ) : (
+              <View style={{ alignItems: 'center', justifyContent: 'center', paddingHorizontal: 36, paddingVertical: 40 }}>
+                <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: colors.primary + '18', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                  <AppIcon name="check-all" size={36} color={colors.primary} />
+                </View>
+                <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 18, textAlign: 'center' }}>
+                  You're All Caught Up!
+                </Text>
+                <Text style={{ textAlign: 'center', color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 13, marginTop: 6, lineHeight: 18 }}>
+                  You've curated all the latest styles. Tap below to restart discovery.
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setCurrentIndex(0);
+                    fetchMoreDeckProducts(1);
+                  }}
+                  style={{ marginTop: 20, backgroundColor: colors.primary, paddingHorizontal: 22, paddingVertical: 11, borderRadius: 22 }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 13 }}>Restart Discovery</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+
+          {/* Clean, Professional Action Bar */}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 48, paddingBottom: 32, paddingTop: 14 }}>
+            {/* Pass / Dislike Button */}
+            <Animated.View style={{ transform: [{ scale: dislikeBtnScale }] }}>
+              <TouchableOpacity
+                onPress={() => triggerSwipe('left')}
+                activeOpacity={0.78}
+                style={{
+                  width: 58,
+                  height: 58,
+                  borderRadius: 29,
+                  backgroundColor: isDark ? '#1C162B' : '#FFFFFF',
+                  borderWidth: 1.5,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: '#000000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: isDark ? 0.35 : 0.08,
+                  shadowRadius: 10,
+                  elevation: 5,
+                }}
+              >
+                <AppIcon name="close" size={24} color={isDark ? '#A78BFA' : '#64748B'} />
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Like / Wishlist Button */}
+            <Animated.View style={{ transform: [{ scale: likeBtnScale }] }}>
+              <TouchableOpacity
+                onPress={() => triggerSwipe('right')}
+                activeOpacity={0.78}
+                style={{
+                  width: 58,
+                  height: 58,
+                  borderRadius: 29,
+                  backgroundColor: isDark ? '#2D1124' : '#FFF0F6',
+                  borderWidth: 1.5,
+                  borderColor: isDark ? 'rgba(236, 72, 153, 0.40)' : 'rgba(236, 72, 153, 0.25)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: '#EC4899',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: isDark ? 0.45 : 0.20,
+                  shadowRadius: 12,
+                  elevation: 5,
+                }}
+              >
+                <AppIcon name="cards-heart" size={26} color="#EC4899" />
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -650,32 +1079,41 @@ function FlashCountdownSection({
   return (
     <View style={[styles.premiumSection, { marginTop: spacing[6] }]}>
       <View style={[styles.flashSaleBg, isDark && styles.flashSaleBgDark]}>
+        <View style={[styles.ambientOrb1, { backgroundColor: isDark ? '#E11D48' : '#FECDD3' }]} />
+        <View style={[styles.ambientOrb2, { backgroundColor: isDark ? '#BE123C' : '#FFE4E6' }]} />
         <View style={styles.bgGradientOverlay} />
         {/* Flash Sale Header with Timer */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing[4], paddingTop: spacing[4], paddingBottom: spacing[2] }}>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <View style={{ backgroundColor: '#E11D48', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
-                <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 1 }}>FLASH SALE</Text>
+              <View style={{ backgroundColor: '#E11D48', paddingHorizontal: 9, paddingVertical: 3.5, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4, shadowColor: '#E11D48', shadowOpacity: 0.35, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 3 }}>
+                <AppIcon name="lightning-bolt" size={12} color="#FFF" />
+                <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 9.5, letterSpacing: 1.2 }}>FLASH SALE</Text>
+              </View>
+              <View style={{ backgroundColor: isDark ? 'rgba(225,29,72,0.15)' : '#FFE4E8', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
+                <Text style={{ color: '#E11D48', fontFamily: fontFamily.sansBold, fontSize: 9.5 }}>LIMITED 24H</Text>
               </View>
             </View>
-            <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 22, letterSpacing: -0.5 }}>
+            <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 23, letterSpacing: -0.5 }}>
               24-Hour Exclusive Deals
+            </Text>
+            <Text style={{ color: isDark ? '#FDA4AF' : '#9F1239', fontFamily: fontFamily.sans, fontSize: 11.5, marginTop: 2 }}>
+              Special jewellery markdowns & deals closing soon
             </Text>
           </View>
 
           {/* Countdown Clock */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: isDark ? 'rgba(225,29,72,0.15)' : '#FFF0F3', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(225,29,72,0.2)' }}>
-            <View style={{ backgroundColor: '#E11D48', width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 12 }}>{pad(timeLeft.hours)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3.5, backgroundColor: isDark ? 'rgba(225,29,72,0.22)' : '#FFF0F3', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(225,29,72,0.3)', shadowColor: '#E11D48', shadowOpacity: isDark ? 0.35 : 0.15, shadowRadius: 6, elevation: 3 }}>
+            <View style={{ backgroundColor: '#E11D48', minWidth: 24, height: 24, paddingHorizontal: 4, borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>{pad(timeLeft.hours)}</Text>
             </View>
             <Text style={{ color: '#E11D48', fontFamily: fontFamily.sansBold, fontSize: 12 }}>:</Text>
-            <View style={{ backgroundColor: '#E11D48', width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 12 }}>{pad(timeLeft.minutes)}</Text>
+            <View style={{ backgroundColor: '#E11D48', minWidth: 24, height: 24, paddingHorizontal: 4, borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>{pad(timeLeft.minutes)}</Text>
             </View>
             <Text style={{ color: '#E11D48', fontFamily: fontFamily.sansBold, fontSize: 12 }}>:</Text>
-            <View style={{ backgroundColor: '#E11D48', width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 12 }}>{pad(timeLeft.seconds)}</Text>
+            <View style={{ backgroundColor: '#E11D48', minWidth: 24, height: 24, paddingHorizontal: 4, borderRadius: 6, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>{pad(timeLeft.seconds)}</Text>
             </View>
           </View>
         </View>
@@ -685,7 +1123,7 @@ function FlashCountdownSection({
           data={products}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 14, paddingTop: 6, gap: 14 }}
+          contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 14, paddingTop: 8, gap: 12 }}
           keyExtractor={item => 'flash-' + item.id}
           renderItem={({ item }) => (
             <View style={[styles.modernCard]}>
@@ -723,24 +1161,45 @@ function FeaturedSpotlightSection({
   return (
     <View style={[styles.premiumSection, { marginTop: spacing[6] }]}>
       <View style={[styles.emeraldLoungeBg, isDark && styles.emeraldLoungeBgDark]}>
+        <View style={[styles.ambientOrb1, { backgroundColor: isDark ? '#059669' : '#A7F3D0' }]} />
+        <View style={[styles.ambientOrb2, { backgroundColor: isDark ? '#10B981' : '#6EE7B7' }]} />
         <View style={styles.bgGradientOverlay} />
         {/* Header */}
         <View style={[styles.sectionBlockHeader, { paddingHorizontal: spacing[4], paddingTop: spacing[4] }]}>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <View style={{ backgroundColor: isDark ? '#059669' : '#D1FAE5', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                {/* <AppIcon name="sparkles" size={13} color={isDark ? '#FFF' : '#047857'} /> */}
-                <Text style={{ color: isDark ? '#FFF' : '#047857', fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 1.5 }}>HANDPICKED STYLES</Text>
+              <View style={{ backgroundColor: isDark ? 'rgba(5,150,105,0.22)' : '#D1FAE5', paddingHorizontal: 9, paddingVertical: 3.5, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: isDark ? 'rgba(52,211,153,0.3)' : 'rgba(5,150,105,0.2)' }}>
+                <AppIcon name="diamond-stone" size={12} color={isDark ? '#6EE7B7' : '#059669'} />
+                <Text style={{ color: isDark ? '#A7F3D0' : '#065F46', fontFamily: fontFamily.sansBold, fontSize: 9.5, letterSpacing: 1.2 }}>EXCLUSIVE</Text>
               </View>
             </View>
-            <Text style={{ color: isDark ? '#FFFFFF' : '#064E3B', fontFamily: fontFamily.sansBold, fontSize: 22, letterSpacing: -0.5 }}>
-              Fashion Jewelry Spotlight
+            <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: -0.5 }}>
+              Curated Picks
+            </Text>
+            <Text style={{ color: isDark ? '#A7F3D0' : '#047857', fontFamily: fontFamily.sans, fontSize: 11.5, marginTop: 2 }}>
+              Handcrafted statement pieces & festive essentials
             </Text>
           </View>
 
-          <TouchableOpacity onPress={goShop} style={[styles.modernExploreBtn, { borderColor: isDark ? '#34D399' : '#059669', backgroundColor: 'transparent' }]}>
-            <Text style={{ color: isDark ? '#34D399' : '#059669', fontFamily: fontFamily.sansBold, fontSize: 11 }}>View All</Text>
-            <AppIcon name="arrow-right" size={13} color={isDark ? '#34D399' : '#059669'} />
+          <TouchableOpacity
+            onPress={goShop}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 5,
+              backgroundColor: isDark ? '#059669' : '#059669',
+              paddingHorizontal: 14,
+              paddingVertical: 8,
+              borderRadius: 22,
+              shadowColor: '#059669',
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.35,
+              shadowRadius: 6,
+              elevation: 4,
+            }}
+          >
+            <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>View All</Text>
+            <AppIcon name="arrow-right" size={13} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -749,7 +1208,7 @@ function FeaturedSpotlightSection({
           data={products}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 14, paddingTop: 6, gap: 14 }}
+          contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 14, paddingTop: 8, gap: 12 }}
           keyExtractor={item => 'spot-' + item.id}
           renderItem={({ item }) => (
             <View style={[styles.modernCard]}>
@@ -787,18 +1246,45 @@ function HorizontalProductRow({
   if (!products || products.length === 0) return null;
 
   return (
-    <View style={{ marginVertical: 14, backgroundColor: isDark ? '#14111D' : '#F7F5FC', paddingVertical: 16 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing[4], marginBottom: 10 }}>
-        <View>
-          <Text style={{ color: '#7C3AED', fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 2 }}>
-            CURATED SPOTLIGHT
-          </Text>
-          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 20, letterSpacing: -0.4 }}>
+    <View style={{ marginVertical: 16, backgroundColor: isDark ? '#14111D' : '#F7F5FC', paddingVertical: 18, borderTopWidth: 1, borderBottomWidth: 1, borderColor: isDark ? 'rgba(124,58,237,0.18)' : 'rgba(124,58,237,0.1)' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing[4], marginBottom: 12 }}>
+        <View style={{ flex: 1, paddingRight: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+            <View style={{ backgroundColor: isDark ? 'rgba(124,58,237,0.2)' : '#EDE9FE', paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8, borderWidth: 1, borderColor: isDark ? 'rgba(167,139,250,0.3)' : 'rgba(124,58,237,0.2)', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <AppIcon name="star-four-points" size={11} color={isDark ? '#C4B5FD' : '#7C3AED'} />
+              <Text style={{ color: isDark ? '#DDD6FE' : '#6D28D9', fontFamily: fontFamily.sansBold, fontSize: 9.5, letterSpacing: 1.2 }}>
+                CURATED SPOTLIGHT
+              </Text>
+            </View>
+          </View>
+          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 21, letterSpacing: -0.4 }}>
             {title}
           </Text>
+          <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, marginTop: 2 }}>
+            Handpicked premium selections at exceptional value
+          </Text>
         </View>
-        <TouchableOpacity onPress={goShop}>
-          <Text style={{ color: colors.primary, fontFamily: fontFamily.sansMedium, fontSize: 12 }}>View All →</Text>
+        <TouchableOpacity
+          onPress={goShop}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 20,
+            backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
+            shadowColor: '#7C3AED',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: isDark ? 0.2 : 0.05,
+            shadowRadius: 4,
+            elevation: 2,
+          }}
+        >
+          <Text style={{ color: '#7C3AED', fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>View All</Text>
+          <AppIcon name="arrow-right" size={12} color="#7C3AED" />
         </TouchableOpacity>
       </View>
 
@@ -806,10 +1292,10 @@ function HorizontalProductRow({
         data={products}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: spacing[4], gap: 14 }}
+        contentContainerStyle={{ paddingHorizontal: spacing[4], gap: 12 }}
         keyExtractor={item => 'hrow-' + item.id}
         renderItem={({ item }) => (
-          <View style={{ width: W * 0.44 }}>
+          <View style={[styles.modernCard]}>
             <ProductCard product={item} onPress={() => goProduct(item.id)} />
           </View>
         )}
@@ -817,6 +1303,81 @@ function HorizontalProductRow({
     </View>
   );
 }
+
+const LUXURY_CATEGORY_THEMES = [
+  {
+    icon: 'star-four-points-outline',
+    badge: 'TRENDING',
+    sub: '250+ Handcrafted Designs',
+    bgLight: '#FFF8F0',
+    bgDark: '#1C1208',
+    borderLight: 'rgba(217, 119, 6, 0.28)',
+    borderDark: 'rgba(245, 158, 11, 0.35)',
+    accent: '#D97706',
+    iconBgLight: 'rgba(217, 119, 6, 0.14)',
+    iconBgDark: 'rgba(245, 158, 11, 0.22)',
+  },
+  {
+    icon: 'clock-time-four-outline',
+    badge: 'LUXURY',
+    sub: 'Premium Jewellery Pieces',
+    bgLight: '#F3F4FF',
+    bgDark: '#0E1226',
+    borderLight: 'rgba(79, 70, 229, 0.28)',
+    borderDark: 'rgba(129, 140, 248, 0.35)',
+    accent: '#4F46E5',
+    iconBgLight: 'rgba(79, 70, 229, 0.14)',
+    iconBgDark: 'rgba(129, 140, 248, 0.22)',
+  },
+  {
+    icon: 'gift-outline',
+    badge: 'BESTSELLER',
+    sub: 'Gift Sets & Combos',
+    bgLight: '#FFF0F4',
+    bgDark: '#200A14',
+    borderLight: 'rgba(225, 29, 72, 0.28)',
+    borderDark: 'rgba(251, 113, 133, 0.35)',
+    accent: '#E11D48',
+    iconBgLight: 'rgba(225, 29, 72, 0.14)',
+    iconBgDark: 'rgba(251, 113, 133, 0.22)',
+  },
+  {
+    icon: 'circle-double',
+    badge: 'HERITAGE',
+    sub: 'Traditional & Modern',
+    bgLight: '#EFFDF5',
+    bgDark: '#071A11',
+    borderLight: 'rgba(5, 150, 105, 0.28)',
+    borderDark: 'rgba(52, 211, 153, 0.35)',
+    accent: '#059669',
+    iconBgLight: 'rgba(5, 150, 105, 0.14)',
+    iconBgDark: 'rgba(52, 211, 153, 0.22)',
+  },
+  {
+    icon: 'diamond-stone',
+    badge: 'EXCLUSIVE',
+    sub: 'Statement & Everyday',
+    bgLight: '#F6F2FF',
+    bgDark: '#160C26',
+    borderLight: 'rgba(124, 58, 237, 0.28)',
+    borderDark: 'rgba(167, 139, 250, 0.35)',
+    accent: '#7C3AED',
+    iconBgLight: 'rgba(124, 58, 237, 0.14)',
+    iconBgDark: 'rgba(167, 139, 250, 0.22)',
+  },
+  {
+    icon: 'link-variant',
+    badge: 'POPULAR',
+    sub: 'Chains & Layering',
+    bgLight: '#FFFBEA',
+    bgDark: '#201605',
+    borderLight: 'rgba(180, 83, 9, 0.28)',
+    borderDark: 'rgba(245, 158, 11, 0.35)',
+    accent: '#B45309',
+    iconBgLight: 'rgba(180, 83, 9, 0.14)',
+    iconBgDark: 'rgba(245, 158, 11, 0.22)',
+  },
+];
 
 // ── In-Feed Category Feature Grid Tiles ──
 function CategoryGridSection({
@@ -840,23 +1401,28 @@ function CategoryGridSection({
   const displayCats = categories.slice(0, 4);
 
   return (
-    <View style={{ marginVertical: 16, marginHorizontal: spacing[4] }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+    <View style={{ marginVertical: 18, marginHorizontal: spacing[4] }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <View>
-          <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 2 }}>
-            SHOP BY CATEGORY
-          </Text>
-          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 20, letterSpacing: -0.4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+            <AppIcon name="grid-large" size={13} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase' }}>
+              COLLECTIONS DIRECTORY
+            </Text>
+          </View>
+          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 22, letterSpacing: -0.4 }}>
             Explore Collections
           </Text>
         </View>
-        <TouchableOpacity onPress={() => goShop()}>
-          <Text style={{ color: colors.primary, fontFamily: fontFamily.sansMedium, fontSize: 12 }}>All Categories →</Text>
+        <TouchableOpacity onPress={() => goShop()} style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+          <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 12 }}>View All</Text>
+          <AppIcon name="chevron-right" size={14} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
         {displayCats.map((cat, idx) => {
+          const theme = LUXURY_CATEGORY_THEMES[idx % LUXURY_CATEGORY_THEMES.length];
           const img = getCategorySource(cat, idx);
           return (
             <TouchableOpacity
@@ -865,17 +1431,94 @@ function CategoryGridSection({
               activeOpacity={0.88}
               style={{
                 width: (W - spacing[4] * 2 - 12) / 2,
-                height: 110,
+                minHeight: 124,
                 borderRadius: 20,
+                backgroundColor: isDark ? theme.bgDark : theme.bgLight,
+                borderWidth: 1.2,
+                borderColor: isDark ? theme.borderDark : theme.borderLight,
+                padding: 14,
+                justifyContent: 'space-between',
+                shadowColor: theme.accent,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: isDark ? 0.25 : 0.08,
+                shadowRadius: 8,
+                elevation: 3,
                 overflow: 'hidden',
                 position: 'relative',
               }}
             >
-              <Image source={img} style={StyleSheet.absoluteFill} resizeMode="cover" />
-              <View style={{ ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.38)' }} />
-              <View style={{ position: 'absolute', bottom: 12, left: 12, right: 12 }}>
-                <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 15 }}>{cat.name}</Text>
-                <Text style={{ color: 'rgba(255,255,255,0.85)', fontFamily: fontFamily.sans, fontSize: 10, marginTop: 2 }}>Explore Collection →</Text>
+              {/* Background ambient glow circle */}
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -15,
+                  right: -15,
+                  width: 70,
+                  height: 70,
+                  borderRadius: 35,
+                  backgroundColor: theme.accent,
+                  opacity: isDark ? 0.15 : 0.08,
+                }}
+              />
+
+              {/* Top Row: Badge & Circular Image Shield */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View
+                  style={{
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <Text style={{ color: theme.accent, fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 1 }}>
+                    {theme.badge}
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 19,
+                    borderWidth: 1.5,
+                    borderColor: theme.accent,
+                    overflow: 'hidden',
+                    backgroundColor: colors.surface,
+                    shadowColor: theme.accent,
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  }}
+                >
+                  <Image source={img} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                </View>
+              </View>
+
+              {/* Bottom: Title & Explore Link */}
+              <View style={{ marginTop: 10 }}>
+                <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 16 }} numberOfLines={1}>
+                  {cat.name}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 10.5 }}>
+                    {theme.sub}
+                  </Text>
+                  <View
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 11,
+                      backgroundColor: isDark ? theme.iconBgDark : theme.iconBgLight,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <AppIcon name="arrow-top-right" size={13} color={theme.accent} />
+                  </View>
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -906,14 +1549,17 @@ function CategoryCarouselBanners({
   if (!categories || categories.length === 0) return null;
 
   return (
-    <View style={{ marginVertical: 16 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing[4], marginBottom: 12 }}>
+    <View style={{ marginVertical: 18 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing[4], marginBottom: 14 }}>
         <View>
-          <Text style={{ color: '#E11D48', fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 2 }}>
-            FEATURED STYLES
-          </Text>
-          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 20, letterSpacing: -0.4 }}>
-            Curated Category Collections
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+            <AppIcon name="crown-outline" size={13} color="#E11D48" />
+            <Text style={{ color: '#E11D48', fontFamily: fontFamily.sansBold, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase' }}>
+              FEATURED COLLECTIONS
+            </Text>
+          </View>
+          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 22, letterSpacing: -0.4 }}>
+            Curated Jewellery Highlights
           </Text>
         </View>
       </View>
@@ -925,27 +1571,97 @@ function CategoryCarouselBanners({
         contentContainerStyle={{ paddingHorizontal: spacing[4], gap: 14 }}
         keyExtractor={item => 'catcar-' + item.id}
         renderItem={({ item, index }) => {
+          const theme = LUXURY_CATEGORY_THEMES[index % LUXURY_CATEGORY_THEMES.length];
           const img = getCategorySource(item, index);
           return (
             <TouchableOpacity
               onPress={() => goShop({ categoryId: item.id, categoryName: item.name })}
-              activeOpacity={0.88}
+              activeOpacity={0.9}
               style={{
-                width: W * 0.62,
-                height: 130,
+                width: W * 0.74,
+                height: 140,
                 borderRadius: 22,
+                backgroundColor: isDark ? theme.bgDark : theme.bgLight,
+                borderWidth: 1.2,
+                borderColor: isDark ? theme.borderDark : theme.borderLight,
+                padding: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                shadowColor: theme.accent,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: isDark ? 0.3 : 0.1,
+                shadowRadius: 10,
+                elevation: 4,
                 overflow: 'hidden',
                 position: 'relative',
               }}
             >
-              <Image source={img} style={StyleSheet.absoluteFill} resizeMode="cover" />
-              <View style={{ ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.42)' }} />
-              <View style={{ position: 'absolute', bottom: 14, left: 14, right: 14 }}>
-                <View style={{ backgroundColor: 'rgba(255,255,255,0.22)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start', marginBottom: 6 }}>
-                  <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 1.5 }}>HOT TREND</Text>
+              {/* Background ambient accent orb */}
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -20,
+                  right: -20,
+                  width: 100,
+                  height: 100,
+                  borderRadius: 50,
+                  backgroundColor: theme.accent,
+                  opacity: isDark ? 0.12 : 0.08,
+                }}
+              />
+
+              {/* Left Content Column */}
+              <View style={{ flex: 1, paddingRight: 10, justifyContent: 'space-between', height: '100%' }}>
+                <View>
+                  <View
+                    style={{
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 8,
+                      alignSelf: 'flex-start',
+                      marginBottom: 6,
+                      borderWidth: 1,
+                      borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    <Text style={{ color: theme.accent, fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 1.2 }}>
+                      {theme.badge} SPOTLIGHT
+                    </Text>
+                  </View>
+                  <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 18 }} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
+                    {theme.sub}
+                  </Text>
                 </View>
-                <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 17 }}>{item.name}</Text>
-                <Text style={{ color: 'rgba(255,255,255,0.85)', fontFamily: fontFamily.sansMedium, fontSize: 11, marginTop: 2 }}>Shop Collection →</Text>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Text style={{ color: theme.accent, fontFamily: fontFamily.sansBold, fontSize: 12 }}>Shop Collection</Text>
+                  <AppIcon name="arrow-right" size={13} color={theme.accent} />
+                </View>
+              </View>
+
+              {/* Right Showcase Card with Gold Border & Image */}
+              <View
+                style={{
+                  width: 84,
+                  height: 96,
+                  borderRadius: 16,
+                  borderWidth: 1.5,
+                  borderColor: theme.accent,
+                  backgroundColor: colors.surface,
+                  overflow: 'hidden',
+                  shadowColor: theme.accent,
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 6,
+                  elevation: 3,
+                }}
+              >
+                <Image source={img} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
               </View>
             </TouchableOpacity>
           );
@@ -983,31 +1699,46 @@ export function HomeScreen({ navigation }: Props) {
   }
   const [locationLabel, setLocationLabel] = useState('Fetching location...');
   const [locationModalVisible, setLocationModalVisible] = useState(false);
-  const thumbPos = useRef(new Animated.Value(isDark ? 24 : 0)).current;
+  const thumbPos = useRef(new Animated.Value(isDark ? 28 : 0)).current;
+  const rotateAnim = useRef(new Animated.Value(isDark ? 1 : 0)).current;
   const pressScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.spring(thumbPos, {
-      toValue: isDark ? 24 : 0,
-      friction: 7,
-      tension: 90,
-      useNativeDriver: true,
-    }).start();
-  }, [isDark, thumbPos]);
+    Animated.parallel([
+      Animated.spring(thumbPos, {
+        toValue: isDark ? 28 : 0,
+        friction: 7,
+        tension: 90,
+        useNativeDriver: true,
+      }),
+      Animated.timing(rotateAnim, {
+        toValue: isDark ? 1 : 0,
+        duration: 350,
+        easing: Easing.out(Easing.back(1.5)),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [isDark, thumbPos, rotateAnim]);
 
   const handleThemeToggle = useCallback(() => {
     const nextIsDark = !isDark;
 
     Animated.parallel([
       Animated.spring(thumbPos, {
-        toValue: nextIsDark ? 24 : 0,
+        toValue: nextIsDark ? 28 : 0,
         friction: 7,
         tension: 90,
         useNativeDriver: true,
       }),
+      Animated.timing(rotateAnim, {
+        toValue: nextIsDark ? 1 : 0,
+        duration: 350,
+        easing: Easing.out(Easing.back(1.5)),
+        useNativeDriver: true,
+      }),
       Animated.sequence([
-        Animated.timing(pressScale, { toValue: 0.88, duration: 80, useNativeDriver: true }),
-        Animated.timing(pressScale, { toValue: 1, duration: 120, useNativeDriver: true }),
+        Animated.timing(pressScale, { toValue: 0.9, duration: 80, useNativeDriver: true }),
+        Animated.spring(pressScale, { toValue: 1, friction: 5, tension: 120, useNativeDriver: true }),
       ]),
     ]).start();
 
@@ -1016,7 +1747,12 @@ export function HomeScreen({ navigation }: Props) {
         setMode(nextIsDark ? 'dark' : 'light');
       });
     });
-  }, [isDark, setMode, thumbPos, pressScale]);
+  }, [isDark, setMode, thumbPos, rotateAnim, pressScale]);
+
+  const iconRotate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   const loadUserLocation = useCallback(() => {
     AsyncStorage.getItem(LOCATION_STORAGE_KEY).then(raw => {
@@ -1027,7 +1763,7 @@ export function HomeScreen({ navigation }: Props) {
             setLocationLabel(parsed.label);
             return;
           }
-        } catch {}
+        } catch { }
       }
 
       if (!user?.id) {
@@ -1086,7 +1822,7 @@ export function HomeScreen({ navigation }: Props) {
   const scrollY = useRef(new Animated.Value(0)).current;
   const bgInterpolate = scrollY.interpolate({
     inputRange: [0, 800, 1600],
-    outputRange: [colors.background, isDark ? '#1C1525' : '#F5F0FF', isDark ? '#1B241C' : '#EAF4EC'],
+    outputRange: [colors.background, isDark ? '#120E1F' : '#F5F0FF', isDark ? '#181228' : '#EAF4EC'],
     extrapolate: 'clamp',
   });
 
@@ -1151,10 +1887,15 @@ export function HomeScreen({ navigation }: Props) {
 
   useEffect(() => { loadInitial(); }, [loadInitial]);
 
-  // Show ad modal immediately on first load
+  // Show ad modal automatically on first load
+  const hasAutoOpenedRef = useRef(false);
   useEffect(() => {
-    if (!loading) {
-      setAdVisible(true);
+    if (!loading && !hasAutoOpenedRef.current) {
+      hasAutoOpenedRef.current = true;
+      const timer = setTimeout(() => {
+        setAdVisible(true);
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [loading]);
 
@@ -1214,10 +1955,42 @@ export function HomeScreen({ navigation }: Props) {
   for (let i = 0; i < featured.length; i += 2) rows.push(featured.slice(i, i + 2));
 
   const THEMES = [
-    { title: 'TRENDING FASHION STYLES', bgLight: '#F5F5F8', bgDark: '#121218', badgeColor: '#4F46E5' },
-    { title: 'POPULAR PICKS', bgLight: '#FAF5F7', bgDark: '#181215', badgeColor: '#E11D48' },
-    { title: 'FEATURED SELECTION', bgLight: '#F4F7F5', bgDark: '#101814', badgeColor: '#059669' },
-    { title: 'STYLE SPOTLIGHT', bgLight: '#F8F5FA', bgDark: '#161218', badgeColor: '#7C3AED' },
+    {
+      badge: 'DESIGNER PICKS',
+      icon: 'star-four-points',
+      title: 'Designer Jewellery Collections',
+      subtitle: 'Handcrafted fashion jewellery & trending accessories',
+      bgLight: '#F7F2FF',
+      bgDark: '#120A24',
+      badgeColor: '#7C3AED',
+    },
+    {
+      badge: 'CONTEMPORARY',
+      icon: 'heart-outline',
+      title: 'Contemporary Statement Jewels',
+      subtitle: 'Modern fashion jewellery & trendy everyday accents',
+      bgLight: '#FFF0F6',
+      bgDark: '#200816',
+      badgeColor: '#EC4899',
+    },
+    {
+      badge: 'EVERYDAY WEAR',
+      icon: 'sparkles',
+      title: 'Trending Fashion Picks',
+      subtitle: 'Stylish accessories & lightweight daily wear',
+      bgLight: '#FFFBEB',
+      bgDark: '#1A1205',
+      badgeColor: '#F59E0B',
+    },
+    {
+      badge: 'SPECIAL OCCASION',
+      icon: 'diamond-stone',
+      title: 'Festive & Party Collections',
+      subtitle: 'Chic statement pieces for special celebrations',
+      bgLight: '#F0F4FF',
+      bgDark: '#0A1028',
+      badgeColor: '#6366F1',
+    },
   ];
 
   const mixedData: any[] = [];
@@ -1234,6 +2007,9 @@ export function HomeScreen({ navigation }: Props) {
       id: `prod-row-${i}`,
       bg: sectionBg,
       headerTitle: isFirstInBlock ? themeObj.title : undefined,
+      headerBadge: isFirstInBlock ? themeObj.badge : undefined,
+      headerSubtitle: isFirstInBlock ? themeObj.subtitle : undefined,
+      headerIcon: isFirstInBlock ? themeObj.icon : undefined,
       badgeColor: themeObj.badgeColor,
     });
 
@@ -1264,75 +2040,92 @@ export function HomeScreen({ navigation }: Props) {
 
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent animated />
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: bgInterpolate }]} />
-      <Animated.View style={{ backgroundColor: bgInterpolate, paddingTop: (Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24) + 10, paddingBottom: spacing[2], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(0,0,0,0.05)', zIndex: 10 }}>
-        {/* ── Top Navbar ── */}
-        <View style={[styles.topBar, { backgroundColor: 'transparent', borderBottomColor: 'transparent' }]}>
+      <Animated.View style={{ backgroundColor: bgInterpolate, paddingTop: (Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 24) + 10, paddingBottom: spacing[2], borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: isDark ? 'rgba(124,58,237,0.15)' : 'rgba(124,58,237,0.10)', zIndex: 10 }}>
+        {/* ── Top Luxury Navbar ── */}
+        <View style={styles.topBar}>
           <View style={styles.topBarLeft}>
             <TouchableOpacity
               onPress={() => navigation.navigate('Account')}
-              activeOpacity={0.8}
-              style={[styles.avatarCircle, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}
+              activeOpacity={0.85}
+              style={styles.avatarRingWrap}
             >
-              <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 15 }}>
-                {firstName.charAt(0).toUpperCase()}
-              </Text>
+              <View style={[styles.avatarRing, { borderColor: isDark ? '#A78BFA' : '#7C3AED', backgroundColor: isDark ? 'rgba(124,58,237,0.18)' : 'rgba(124,58,237,0.10)' }]}>
+                <View style={[styles.avatarInner, { backgroundColor: isDark ? '#1C1236' : '#F5EEFF' }]}>
+                  <Text style={[styles.avatarText, { color: isDark ? '#C4B5FD' : '#7C3AED', fontFamily: fontFamily.sansBold }]}>
+                    {firstName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.avatarVipBadge, { backgroundColor: '#EC4899' }]}>
+                <AppIcon name="star" size={7} color="#FFF" />
+              </View>
             </TouchableOpacity>
+
             <View style={{ justifyContent: 'center', flex: 1 }}>
-              <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 15, letterSpacing: 0.2 }} numberOfLines={1}>
-                Hey, {firstName}
+              <Text style={[styles.greetingSub, { color: isDark ? '#C4B5FD' : '#7C3AED', fontFamily: fontFamily.sansMedium }]}>
+                {getGreeting()}
+              </Text>
+              <Text style={[styles.greetingTitle, { color: colors.textPrimary, fontFamily: fontFamily.sansBold }]} numberOfLines={1}>
+                {firstName}
               </Text>
               <TouchableOpacity
                 onPress={() => setLocationModalVisible(true)}
                 activeOpacity={0.7}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 1, maxWidth: 190 }}
+                style={[
+                  styles.locationChip,
+                  {
+                    backgroundColor: isDark ? 'rgba(124,58,237,0.15)' : 'rgba(124,58,237,0.08)',
+                    borderColor: isDark ? 'rgba(167,139,250,0.30)' : 'rgba(124,58,237,0.22)',
+                  },
+                ]}
               >
-                <AppIcon name="map-marker-outline" size={11} color={colors.primary} />
-                <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, flexShrink: 1 }} numberOfLines={1}>
+                <AppIcon name="map-marker" size={10} color={isDark ? '#C4B5FD' : '#7C3AED'} />
+                <Text style={[styles.locationText, { color: colors.textSecondary, fontFamily: fontFamily.sansMedium }]} numberOfLines={1}>
                   {locationLabel}
                 </Text>
-                <AppIcon name="chevron-down" size={10} color={colors.textMuted} />
+                <AppIcon name="chevron-down" size={10} color={isDark ? '#C4B5FD' : '#7C3AED'} />
               </TouchableOpacity>
             </View>
           </View>
+
           <View style={styles.topBarRight}>
             <Animated.View style={{ transform: [{ scale: pressScale }] }}>
               <TouchableOpacity
                 onPress={handleThemeToggle}
                 activeOpacity={0.9}
                 style={[
-                  styles.themeCapsule,
+                  styles.themeCapsuleLuxury,
                   {
-                    backgroundColor: isDark ? 'rgba(28, 22, 42, 0.9)' : 'rgba(240, 238, 246, 0.9)',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.08)',
+                    backgroundColor: isDark ? 'rgba(24, 16, 42, 0.95)' : 'rgba(245, 238, 255, 0.95)',
+                    borderColor: isDark ? 'rgba(165, 180, 252, 0.35)' : 'rgba(124, 58, 237, 0.35)',
                   },
                 ]}
               >
                 <Animated.View
                   style={[
-                    styles.themeThumb,
+                    styles.themeThumbLuxury,
                     {
-                      backgroundColor: isDark ? '#2E274C' : '#FFFFFF',
+                      backgroundColor: isDark ? '#2E1A47' : '#FFFFFF',
                       transform: [{ translateX: thumbPos }],
-                      shadowColor: isDark ? '#A5B4FC' : '#F59E0B',
-                      shadowOpacity: isDark ? 0.35 : 0.25,
-                      shadowRadius: 5,
-                      shadowOffset: { width: 0, height: 1.5 },
-                      elevation: 3,
+                      shadowColor: isDark ? '#A78BFA' : '#7C3AED',
+                      borderColor: isDark ? 'rgba(165,180,252,0.45)' : 'rgba(124,58,237,0.30)',
                     },
                   ]}
                 >
-                  <AppIcon
-                    name={isDark ? 'weather-night' : 'weather-sunny'}
-                    size={13}
-                    color={isDark ? '#C7D2FE' : '#F59E0B'}
-                  />
+                  <Animated.View style={{ transform: [{ rotate: iconRotate }] }}>
+                    <AppIcon
+                      name={isDark ? 'weather-night' : 'weather-sunny'}
+                      size={14}
+                      color={isDark ? '#C4B5FD' : '#7C3AED'}
+                    />
+                  </Animated.View>
                 </Animated.View>
                 <View style={styles.themeCapsuleIcons}>
                   <View style={styles.themeIconSlot}>
-                    <AppIcon name="weather-sunny" size={11} color={isDark ? 'rgba(255,255,255,0.35)' : 'transparent'} />
+                    <AppIcon name="weather-sunny" size={11} color={isDark ? 'rgba(255,255,255,0.25)' : 'transparent'} />
                   </View>
                   <View style={styles.themeIconSlot}>
-                    <AppIcon name="weather-night" size={11} color={isDark ? 'transparent' : 'rgba(0,0,0,0.35)'} />
+                    <AppIcon name="weather-night" size={11} color={isDark ? 'transparent' : 'rgba(0,0,0,0.25)'} />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -1341,55 +2134,85 @@ export function HomeScreen({ navigation }: Props) {
         </View>
 
         {/* ── Search Bar ── */}
-        <View style={[styles.searchRow, { backgroundColor: 'transparent', borderBottomColor: 'transparent' }]}>
+        <View style={styles.searchRowLuxury}>
           <TouchableOpacity
             onPress={handleSearchSubmit}
-            activeOpacity={0.85}
-            style={[styles.searchBar, { backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', borderColor: 'rgba(0,0,0,0.05)', borderRadius: radius.full, borderWidth: 1 }]}
+            activeOpacity={0.9}
+            style={[
+              styles.searchBarLuxury,
+              {
+                backgroundColor: isDark ? 'rgba(20, 14, 34, 0.92)' : 'rgba(255, 255, 255, 0.98)',
+                borderColor: isDark ? 'rgba(167, 139, 250, 0.32)' : 'rgba(124, 58, 237, 0.28)',
+              },
+            ]}
           >
-            <AppIcon name="magnify" size={17} color={colors.textMuted} />
+            <View style={[styles.searchIconBadge, { backgroundColor: isDark ? '#7C3AED' : '#7C3AED' }]}>
+              <AppIcon name="magnify" size={16} color="#FFFFFF" />
+            </View>
             <TextInput
               value={search}
               onChangeText={setSearch}
               onSubmitEditing={handleSearchSubmit}
-              placeholder="Search rings, earrings, chains..."
-              placeholderTextColor={colors.placeholder}
+              placeholder="Search rings, necklaces, bangles, earrings..."
+              placeholderTextColor={isDark ? '#8E82A3' : '#9688AA'}
               returnKeyType="search"
               blurOnSubmit
-              style={[styles.searchInput, { color: colors.textPrimary, fontFamily: fontFamily.sans, fontSize: 14 }]}
+              style={[styles.searchInputLuxury, { color: colors.textPrimary, fontFamily: fontFamily.sans }]}
             />
             {search.length > 0 ? (
               <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <AppIcon name="close-circle" size={16} color={colors.textMuted} />
               </TouchableOpacity>
-            ) : (
-              <View style={[styles.searchDivider, { backgroundColor: colors.border }]} />
-            )}
-            <AppIcon name="tune-variant" size={16} color={colors.primary} />
+            ) : null}
+            <View style={[styles.searchFilterBtn, { backgroundColor: isDark ? 'rgba(124,58,237,0.25)' : 'rgba(124,58,237,0.12)' }]}>
+              <AppIcon name="tune-variant" size={15} color={isDark ? '#C4B5FD' : '#7C3AED'} />
+            </View>
           </TouchableOpacity>
         </View>
 
-        {/* ── Top Categories Carousel ── */}
+        {/* ── Top Categories Story Carousel ── */}
         {categories.length > 0 && (
-          <View style={{ marginTop: 12, marginBottom: 8 }}>
+          <View style={{ marginTop: 12, marginBottom: 6, paddingBottom: 4 }}>
             <Animated.FlatList
               data={categories}
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 16, gap: 16 }}
+              contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
               keyExtractor={item => 'topcat-' + item.id}
               renderItem={({ item, index }) => {
                 const catImg = getCategorySource(item, index);
                 return (
                   <TouchableOpacity
                     onPress={() => goShop({ categoryId: item.id, categoryName: item.name })}
-                    activeOpacity={0.85}
-                    style={{ alignItems: 'center', width: 68 }}
+                    activeOpacity={0.82}
+                    style={{ alignItems: 'center', width: 76 }}
                   >
-                    <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(255,255,255,0.5)', overflow: 'hidden', padding: 2, borderWidth: 1, borderColor: 'rgba(0,0,0,0.04)' }}>
-                      <Image source={catImg} style={{ width: '100%', height: '100%', borderRadius: 28 }} resizeMode="cover" />
+                    {/* Story-style Ring matching Shop page */}
+                    <View
+                      style={[
+                        styles.categoryRingOuter,
+                        {
+                          borderColor: colors.primary,
+                          backgroundColor: colors.surfaceElevated,
+                          shadowColor: colors.primary,
+                          shadowOpacity: isDark ? 0.35 : 0.12,
+                        },
+                      ]}
+                    >
+                      <View style={[styles.categoryRingInner, { backgroundColor: colors.surface }]}>
+                        <Image source={catImg} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                      </View>
                     </View>
-                    <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansMedium, fontSize: 11, marginTop: 6, textAlign: 'center' }} numberOfLines={1}>
+                    <Text
+                      style={[
+                        styles.categoryLabelText,
+                        {
+                          color: colors.textPrimary,
+                          fontFamily: fontFamily.sansBold,
+                        },
+                      ]}
+                      numberOfLines={1}
+                    >
                       {item.name}
                     </Text>
                   </TouchableOpacity>
@@ -1400,17 +2223,6 @@ export function HomeScreen({ navigation }: Props) {
         )}
       </Animated.View>
 
-      <AdModal
-        visible={adVisible}
-        onClose={() => setAdVisible(false)}
-        colors={colors}
-        fontFamily={fontFamily}
-        fontSize={fontSize}
-        radius={radius}
-        products={featured}
-        goProduct={goProduct}
-        isDark={isDark}
-      />
       <Animated.FlatList
         data={mixedData}
 
@@ -1469,7 +2281,7 @@ export function HomeScreen({ navigation }: Props) {
                         key={i}
                         style={[
                           styles.dot,
-                          { backgroundColor: i === bannerIdx ? colors.primary : 'rgba(255,255,255,0.5)', width: i === bannerIdx ? 18 : 6 },
+                          { backgroundColor: i === bannerIdx ? '#7C3AED' : 'rgba(255,255,255,0.5)', width: i === bannerIdx ? 18 : 6 },
                         ]}
                       />
                     ))}
@@ -1482,27 +2294,53 @@ export function HomeScreen({ navigation }: Props) {
             {newArrivals.length > 0 && (
               <View style={[styles.premiumSection, { marginTop: spacing[6] }]}>
                 <View style={[styles.newArrivalsBg, isDark && styles.newArrivalsBgDark]}>
+                  <View style={[styles.ambientOrb1, { backgroundColor: isDark ? '#7C3AED' : '#C4B5FD' }]} />
+                  <View style={[styles.ambientOrb2, { backgroundColor: isDark ? '#4F46E5' : '#DDD6FE' }]} />
                   <View style={styles.bgGradientOverlay} />
 
                   <View style={[styles.sectionBlockHeader, { paddingHorizontal: spacing[4], paddingTop: spacing[4] }]}>
-                    <View>
-                      <Text style={{ color: isDark ? '#818CF8' : '#4F46E5', fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 4 }}>
-                        Just Dropped
-                      </Text>
-                      <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 25, letterSpacing: -0.5 }}>
+                    <View style={{ flex: 1, paddingRight: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <View style={{ backgroundColor: isDark ? 'rgba(99,102,241,0.2)' : '#EDE9FE', paddingHorizontal: 9, paddingVertical: 3.5, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: isDark ? 'rgba(129,140,248,0.3)' : 'rgba(99,102,241,0.2)' }}>
+                          <AppIcon name="star-four-points" size={12} color={isDark ? '#A5B4FC' : '#6366F1'} />
+                          <Text style={{ color: isDark ? '#C7D2FE' : '#4F46E5', fontFamily: fontFamily.sansBold, fontSize: 9.5, letterSpacing: 1.2 }}>
+                            JUST DROPPED
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: -0.5 }}>
                         New Arrivals
                       </Text>
+                      <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontFamily: fontFamily.sans, fontSize: 11.5, marginTop: 2 }}>
+                        Freshly crafted designer jewellery & latest season drops
+                      </Text>
                     </View>
-                    <TouchableOpacity onPress={() => goShop()} style={[styles.modernExploreBtn, { borderColor: isDark ? '#818CF8' : '#4F46E5', backgroundColor: 'transparent' }]}>
-                      <Text style={{ color: isDark ? '#818CF8' : '#4F46E5', fontFamily: fontFamily.sansBold, fontSize: 11 }}>Explore</Text>
-                      <AppIcon name="arrow-right" size={13} color={isDark ? '#818CF8' : '#4F46E5'} />
+                    <TouchableOpacity
+                      onPress={() => goShop()}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 5,
+                        backgroundColor: '#4F46E5',
+                        paddingHorizontal: 14,
+                        paddingVertical: 8,
+                        borderRadius: 22,
+                        shadowColor: '#4F46E5',
+                        shadowOffset: { width: 0, height: 3 },
+                        shadowOpacity: 0.35,
+                        shadowRadius: 6,
+                        elevation: 4,
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>Explore</Text>
+                      <AppIcon name="arrow-right" size={13} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
                   <FlatList
                     data={newArrivals}
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 4, gap: 14 }}
+                    contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 6, gap: 12 }}
                     keyExtractor={item => 'na-' + item.id}
                     renderItem={({ item }) => (
                       <View style={[styles.modernCard]}>
@@ -1548,27 +2386,53 @@ export function HomeScreen({ navigation }: Props) {
             {trending.length > 0 && (
               <View style={styles.premiumSection}>
                 <View style={[styles.trendingNowBg, isDark && styles.trendingNowBgDark]}>
+                  <View style={[styles.ambientOrb1, { backgroundColor: isDark ? '#D97706' : '#FED7AA' }]} />
+                  <View style={[styles.ambientOrb2, { backgroundColor: isDark ? '#EA580C' : '#FDE68A' }]} />
                   <View style={styles.bgGradientOverlay} />
 
                   <View style={[styles.sectionBlockHeader, { paddingHorizontal: spacing[4], paddingTop: spacing[4] }]}>
-                    <View>
-                      <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 10, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 4 }}>
-                        Hot Right Now
-                      </Text>
-                      <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 25, letterSpacing: -0.5 }}>
+                    <View style={{ flex: 1, paddingRight: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <View style={{ backgroundColor: isDark ? 'rgba(234,88,12,0.22)' : '#FFEDD5', paddingHorizontal: 9, paddingVertical: 3.5, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: isDark ? 'rgba(251,146,60,0.3)' : 'rgba(234,88,12,0.2)' }}>
+                          <AppIcon name="fire" size={12} color={isDark ? '#FDBA74' : '#EA580C'} />
+                          <Text style={{ color: isDark ? '#FED7AA' : '#C2410C', fontFamily: fontFamily.sansBold, fontSize: 9.5, letterSpacing: 1.2 }}>
+                            HOT RIGHT NOW
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: -0.5 }}>
                         Trending Now
                       </Text>
+                      <Text style={{ color: isDark ? '#CBD5E1' : '#78716C', fontFamily: fontFamily.sans, fontSize: 11.5, marginTop: 2 }}>
+                        Top-selling jewellery styles loved by customers this week
+                      </Text>
                     </View>
-                    <TouchableOpacity onPress={() => goShop()} style={[styles.modernExploreBtn, { borderColor: colors.primary, backgroundColor: 'transparent' }]}>
-                      <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: 11 }}>Explore</Text>
-                      <AppIcon name="arrow-right" size={13} color={colors.primary} />
+                    <TouchableOpacity
+                      onPress={() => goShop()}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 5,
+                        backgroundColor: isDark ? '#D97706' : '#B5814A',
+                        paddingHorizontal: 14,
+                        paddingVertical: 8,
+                        borderRadius: 22,
+                        shadowColor: '#B5814A',
+                        shadowOffset: { width: 0, height: 3 },
+                        shadowOpacity: 0.35,
+                        shadowRadius: 6,
+                        elevation: 4,
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>Explore</Text>
+                      <AppIcon name="arrow-right" size={13} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
                   <FlatList
                     data={trending}
                     horizontal
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 4, gap: 14 }}
+                    contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 6, gap: 12 }}
                     keyExtractor={item => 'tr-' + item.id}
                     renderItem={({ item }) => (
                       <View style={[styles.modernCard]}>
@@ -1579,6 +2443,17 @@ export function HomeScreen({ navigation }: Props) {
                 </View>
               </View>
             )}
+
+            {/* ── Editorial Showcase Banners (Signature Collections) ── */}
+            <EditorialBannersSection
+              banners={EDITORIAL_BANNERS}
+              goShop={goShop}
+              colors={colors}
+              fontFamily={fontFamily}
+              spacing={spacing}
+              radius={radius}
+              isDark={isDark}
+            />
 
             {/* Divider before interleaved feed */}
             <View style={{ height: 12 }} />
@@ -1593,14 +2468,48 @@ export function HomeScreen({ navigation }: Props) {
           if (item.type === 'product-row') {
             const row = item.data;
             return (
-              <View style={{ backgroundColor: item.bg, paddingBottom: 10 }}>
+              <View style={{ backgroundColor: item.bg, paddingBottom: 14 }}>
                 {item.headerTitle && (
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing[4], paddingTop: 16, paddingBottom: 6 }}>
-                    <Text style={{ color: item.badgeColor || colors.primary, fontFamily: fontFamily.sansBold, fontSize: 11, letterSpacing: 2, textTransform: 'uppercase' }}>
-                      {item.headerTitle}
-                    </Text>
-                    <TouchableOpacity onPress={() => goShop()}>
-                      <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sansMedium, fontSize: 11 }}>View All →</Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing[4], paddingTop: 18, paddingBottom: 12 }}>
+                    <View style={{ flex: 1, paddingRight: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+                        <View style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF', paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 8, borderWidth: 1, borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <AppIcon name={item.headerIcon || 'star-four-points'} size={11} color={item.badgeColor || colors.primary} />
+                          <Text style={{ color: item.badgeColor || colors.primary, fontFamily: fontFamily.sansBold, fontSize: 9.5, letterSpacing: 1.2 }}>
+                            {item.headerBadge || 'CURATED'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 20, letterSpacing: -0.4 }}>
+                        {item.headerTitle}
+                      </Text>
+                      {item.headerSubtitle && (
+                        <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, marginTop: 2 }}>
+                          {item.headerSubtitle}
+                        </Text>
+                      )}
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => goShop()}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4,
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 20,
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                        borderWidth: 1,
+                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: isDark ? 0.2 : 0.05,
+                        shadowRadius: 4,
+                        elevation: 2,
+                      }}
+                    >
+                      <Text style={{ color: item.badgeColor || colors.primary, fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>View All</Text>
+                      <AppIcon name="arrow-right" size={12} color={item.badgeColor || colors.primary} />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -1678,10 +2587,10 @@ export function HomeScreen({ navigation }: Props) {
                     <Text style={{ color: '#FFF', fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 1.5 }}>TRENDING NOW</Text>
                   </View>
                   <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 17, letterSpacing: -0.3 }}>
-                    Chic Fashion Accessories
+                    Designer Jewellery Collection
                   </Text>
                   <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, marginTop: 2 }}>
-                    Flat 20% OFF on statement pieces & combo sets
+                    Flat 20% OFF on bridal necklaces & earring sets
                   </Text>
                 </View>
                 <View style={{ backgroundColor: '#7C3AED', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}>
@@ -1714,7 +2623,7 @@ export function HomeScreen({ navigation }: Props) {
                     Minimalist Everyday Jewels
                   </Text>
                   <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, marginTop: 2 }}>
-                    Lightweight, tarnish-resistant daily staples
+                    Lightweight, anti-tarnish daily jewellery
                   </Text>
                 </View>
                 <View style={{ backgroundColor: '#2563EB', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' }}>
@@ -1741,25 +2650,28 @@ export function HomeScreen({ navigation }: Props) {
         }
       ></Animated.FlatList>
 
-      {/* ── Tinder Swipe FAB ── */}
-      <View style={{ position: 'absolute', bottom: 75, right: 16, zIndex: 9999, elevation: 12 }}>
+      {/* ── Style Discovery Swipe FAB ── */}
+      <View style={{ position: 'absolute', bottom: 78, right: 16, zIndex: 9999, elevation: 12 }}>
         <TouchableOpacity
-          activeOpacity={0.85}
+          activeOpacity={0.88}
           onPress={() => setAdVisible(true)}
           style={{
             backgroundColor: colors.primary,
-            width: 48,
-            height: 48,
-            borderRadius: 24,
+            width: 52,
+            height: 52,
+            borderRadius: 26,
             alignItems: 'center',
             justifyContent: 'center',
-            shadowColor: '#000',
+            shadowColor: colors.primary,
             shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.2,
-            shadowRadius: 6,
+            shadowOpacity: 0.35,
+            shadowRadius: 8,
+            elevation: 8,
+            borderWidth: 1.5,
+            borderColor: 'rgba(255,255,255,0.25)',
           }}
         >
-          <AppIcon name="heart-outline" size={20} color="#FFF" />
+          <AppIcon name="heart" size={24} color="#FFF" />
         </TouchableOpacity>
       </View>
 
@@ -1777,6 +2689,19 @@ export function HomeScreen({ navigation }: Props) {
             navigation.navigate('Account');
           }
         }}
+      />
+
+      {/* ── Style Discovery Swipe Ad Modal ── */}
+      <AdModal
+        visible={adVisible}
+        onClose={() => setAdVisible(false)}
+        colors={colors}
+        fontFamily={fontFamily}
+        fontSize={fontSize}
+        radius={radius}
+        products={newArrivals.length > 0 ? newArrivals : featured.length > 0 ? featured : trending.length > 0 ? trending : expressDrops}
+        goProduct={goProduct}
+        isDark={isDark}
       />
     </View>
   );
@@ -1802,20 +2727,19 @@ function SectionHeader({
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  // Top Bar
+  // Top Luxury Navbar
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingTop: 8,
+    paddingBottom: 10,
   },
   topBarLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
     flex: 1,
   },
   topBarRight: {
@@ -1823,6 +2747,188 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  avatarRingWrap: {
+    position: 'relative',
+  },
+  avatarRing: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.8,
+    padding: 2.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#B5814A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  avatarInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  avatarVipBadge: {
+    position: 'absolute',
+    bottom: -1,
+    right: -1,
+    width: 15,
+    height: 15,
+    borderRadius: 8,
+    backgroundColor: '#D97706',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFF',
+  },
+  greetingSub: {
+    fontSize: 11,
+    letterSpacing: 0.3,
+    lineHeight: 14,
+  },
+  greetingTitle: {
+    fontSize: 16,
+    letterSpacing: 0.2,
+    marginTop: 1,
+  },
+  locationChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignSelf: 'flex-start',
+    maxWidth: 190,
+  },
+  locationText: {
+    fontSize: 10.5,
+    flexShrink: 1,
+  },
+
+  // Luxury Theme Toggle
+  themeCapsuleLuxury: {
+    width: 60,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1.2,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+    position: 'relative',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  themeThumbLuxury: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  themeCapsuleIcons: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 7,
+    zIndex: 1,
+  },
+  themeIconSlot: {
+    width: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Luxury Search Bar
+  searchRowLuxury: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  searchBarLuxury: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 44,
+    paddingLeft: 8,
+    paddingRight: 8,
+    borderRadius: 22,
+    borderWidth: 1.2,
+    gap: 10,
+    shadowColor: '#B5814A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  searchIconBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchInputLuxury: {
+    flex: 1,
+    height: 44,
+    padding: 0,
+    fontSize: 13.5,
+  },
+  searchFilterBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Category Story Rings
+  categoryRingOuter: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    padding: 3,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    elevation: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryRingInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 33,
+    overflow: 'hidden',
+  },
+  categoryLabelText: {
+    fontSize: 12,
+    marginTop: 7,
+    textAlign: 'center',
+    letterSpacing: 0.1,
+  },
+
+  // Fallback / standard
   avatarCircle: {
     width: 40,
     height: 40,
@@ -1856,24 +2962,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
   },
-  themeCapsuleIcons: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 5,
-    zIndex: 1,
-  },
-  themeIconSlot: {
-    width: 18,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   searchRow: {
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -1893,6 +2981,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   searchInput: { flex: 1, height: 42, padding: 0 },
+
   // Banner
   bannerWrap: { overflow: 'hidden', position: 'relative' },
   bannerOverlay: {
@@ -1916,17 +3005,18 @@ const styles = StyleSheet.create({
   },
   dot: { height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
 
+  // Marquee
   marqueeShell: {
     overflow: 'hidden',
-    backgroundColor: '#FDF8F2',
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(181,129,74,0.18)',
-    marginTop: 10,
+    backgroundColor: '#F5EEFF',
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(124,58,237,0.22)',
+    marginTop: 8,
   },
   marqueeShellDark: {
-    backgroundColor: '#131318',
-    borderColor: 'rgba(212,165,116,0.12)',
+    backgroundColor: '#120B20',
+    borderColor: 'rgba(167,139,250,0.25)',
   },
   marqueeRow: {
     flexDirection: 'row',
@@ -1937,23 +3027,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 18,
-    paddingVertical: 11,
+    paddingVertical: 10,
   },
   marqueeIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(181,129,74,0.10)',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(124,58,237,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   marqueeIconWrapDark: {
-    backgroundColor: 'rgba(212,165,116,0.10)',
+    backgroundColor: 'rgba(236,72,153,0.20)',
   },
   marqueeIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2003,37 +3093,75 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 20,
     position: 'relative',
-    backgroundColor: '#F3F2FF', // Luxurious Lavender-Periwinkle tint
+    backgroundColor: '#F7F2FF', // Radiant Royal Lavender
+    borderTopWidth: 1.2,
+    borderBottomWidth: 1.2,
+    borderColor: 'rgba(124,58,237,0.25)',
+    overflow: 'hidden',
   },
   newArrivalsBgDark: {
-    backgroundColor: '#0E0D1E', // Dark twilight
+    backgroundColor: '#120A24', // Onyx Royal Amethyst
+    borderColor: 'rgba(167,139,250,0.35)',
   },
   trendingNowBg: {
     paddingTop: 24,
     paddingBottom: 20,
     position: 'relative',
-    backgroundColor: '#FFF4EE', // Rich Terracotta-rose tint
+    backgroundColor: '#FFF7ED', // Warm 24K Champagne Sunset
+    borderTopWidth: 1.2,
+    borderBottomWidth: 1.2,
+    borderColor: 'rgba(217,119,6,0.25)',
+    overflow: 'hidden',
   },
   trendingNowBgDark: {
-    backgroundColor: '#18110D', // Dark amber/bronze
+    backgroundColor: '#1A1107', // Burnished 24K Gold Obsidian
+    borderColor: 'rgba(245,158,11,0.35)',
   },
   flashSaleBg: {
     paddingTop: 24,
     paddingBottom: 20,
     position: 'relative',
-    backgroundColor: '#FFF7F5', // Warm Sunset Rose
+    backgroundColor: '#FFF0F6', // Rose Gold & Ruby Sparkle
+    borderTopWidth: 1.2,
+    borderBottomWidth: 1.2,
+    borderColor: 'rgba(236,72,153,0.25)',
+    overflow: 'hidden',
   },
   flashSaleBgDark: {
-    backgroundColor: '#1C0B0E',
+    backgroundColor: '#200816', // Deep Crimson Velvet Obsidian
+    borderColor: 'rgba(244,63,94,0.35)',
   },
   emeraldLoungeBg: {
     paddingTop: 24,
     paddingBottom: 20,
     position: 'relative',
-    backgroundColor: '#EFF8F3', // Soft Mint Lounge
+    backgroundColor: '#ECFDF5', // Imperial Jade & Mint
+    borderTopWidth: 1.2,
+    borderBottomWidth: 1.2,
+    borderColor: 'rgba(5,150,105,0.25)',
+    overflow: 'hidden',
   },
   emeraldLoungeBgDark: {
-    backgroundColor: '#051E14',
+    backgroundColor: '#061A10', // Imperial Emerald Obsidian
+    borderColor: 'rgba(52,211,153,0.35)',
+  },
+  ambientOrb1: {
+    position: 'absolute',
+    top: -40,
+    left: -25,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    opacity: 0.16,
+  },
+  ambientOrb2: {
+    position: 'absolute',
+    bottom: -45,
+    right: -25,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    opacity: 0.14,
   },
   bgGradientOverlay: {
     position: 'absolute',
@@ -2058,7 +3186,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   modernCard: {
-    width: 146,
+    width: Math.floor((W - 32 - 12) / 2),
     backgroundColor: 'transparent',
   },
 

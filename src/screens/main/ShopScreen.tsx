@@ -58,41 +58,51 @@ function getCategorySource(cat: any, index: number) {
 
 /* ── Memoized Sub-components for 60fps performance ── */
 
-const CategoryItem = React.memo(({ item, index, isSelected, onSelect, colors, fontFamily }: any) => {
+const CategoryItem = React.memo(({ item, index, isSelected, onSelect, colors, fontFamily, isDark }: any) => {
   const isAll = item.id === 'all';
   const catImg = !isAll ? getCategorySource(item, index - 1) : null;
 
   return (
     <TouchableOpacity
       onPress={() => onSelect(isAll ? null : item.id)}
-      activeOpacity={0.85}
-      style={{ alignItems: 'center', width: 68 }}
+      activeOpacity={0.82}
+      style={{ alignItems: 'center', width: 78 }}
     >
-      <View style={{
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: isSelected ? colors.primary + '15' : colors.surfaceElevated,
-        overflow: 'hidden',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: isAll ? 0 : 2,
-        borderWidth: isSelected ? 2 : 1,
-        borderColor: isSelected ? colors.primary : colors.border,
-      }}>
-        {isAll ? (
-          <AppIcon name="grid-large" size={24} color={isSelected ? colors.primary : colors.textMuted} />
-        ) : (
-          <Image source={catImg!} style={{ width: '100%', height: '100%', borderRadius: 28 }} resizeMode="cover" />
-        )}
+      {/* Professional Outer Accent Ring matching Home Page */}
+      <View
+        style={{
+          width: 74,
+          height: 74,
+          borderRadius: 37,
+          padding: 3,
+          borderWidth: isSelected ? 2.2 : 1.8,
+          borderColor: colors.primary,
+          backgroundColor: isSelected ? colors.primary + '18' : colors.surfaceElevated,
+          shadowColor: '#6B5040',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: isDark ? 0.35 : 0.12,
+          shadowRadius: 5,
+          elevation: 3,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <View style={{ width: '100%', height: '100%', borderRadius: 33, overflow: 'hidden', backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+          {isAll ? (
+            <AppIcon name="grid-large" size={26} color={isSelected ? colors.primary : colors.textMuted} />
+          ) : (
+            <Image source={catImg!} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          )}
+        </View>
       </View>
       <Text
         style={{
           color: isSelected ? colors.primary : colors.textPrimary,
           fontFamily: isSelected ? fontFamily.sansBold : fontFamily.sansMedium,
-          fontSize: 11,
-          marginTop: 6,
+          fontSize: 12,
+          marginTop: 8,
           textAlign: 'center',
+          letterSpacing: 0.1,
         }}
         numberOfLines={1}
       >
@@ -142,7 +152,7 @@ const ShopSkeleton = React.memo(({ colors, spacing, radius }: any) => {
 });
 
 export function ShopScreen({ navigation, route }: Props) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { colors, fontFamily, fontSize, spacing, radius } = theme;
   const params = route?.params as any;
 
@@ -320,10 +330,11 @@ export function ShopScreen({ navigation, route }: Props) {
           onSelect={handleCategorySelect}
           colors={colors}
           fontFamily={fontFamily}
+          isDark={isDark}
         />
       );
     },
-    [selectedCatId, handleCategorySelect, colors, fontFamily],
+    [selectedCatId, handleCategorySelect, colors, fontFamily, isDark],
   );
 
   const categoryListData = React.useMemo(() => {
@@ -337,12 +348,11 @@ export function ShopScreen({ navigation, route }: Props) {
     <Screen style={{ backgroundColor: colors.background }}>
       <PageHeader
         title={pageTitle}
-        subtitle={!loading ? `${totalCount} products` : undefined}
         onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
       />
 
       {/* ── Search & Sort Row ── */}
-      <View style={{ position: 'relative', zIndex: 100, paddingHorizontal: spacing[5], paddingBottom: spacing[3] }}>
+      <View style={{ position: 'relative', zIndex: 100, paddingHorizontal: spacing[5], paddingTop: 12, paddingBottom: 10 }}>
         <View style={[styles.filterRow, { gap: 10 }]}>
           <View style={[styles.searchBox, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg, flex: 1 }]}>
             <AppIcon name="magnify" color={colors.textMuted} size={18} />
@@ -384,7 +394,7 @@ export function ShopScreen({ navigation, route }: Props) {
             styles.sortDropdown,
             {
               position: 'absolute',
-              top: 50,
+              top: 62,
               left: spacing[5],
               right: spacing[5],
               zIndex: 1000,
@@ -415,17 +425,17 @@ export function ShopScreen({ navigation, route }: Props) {
       </View>
 
       {/* ── Top Categories Carousel ── */}
-      <View style={{ marginBottom: 12 }}>
+      <View style={{ marginBottom: 12, paddingBottom: 2 }}>
         <FlatList
           data={categoryListData}
           extraData={selectedCatId}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: spacing[5], gap: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: 14 }}
           keyExtractor={categoryKeyExtractor}
           renderItem={renderCategoryItem}
-          initialNumToRender={10}
-          maxToRenderPerBatch={10}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
           windowSize={5}
         />
       </View>
@@ -456,7 +466,7 @@ export function ShopScreen({ navigation, route }: Props) {
           </Text>
         </View>
       ) : (
-        <View style={{ flex: 1, opacity: loading && products.length > 0 ? 0.7 : 1 }}>
+        <View style={{ flex: 1, opacity: loading && products.length > 0 ? 0.75 : 1 }}>
           <FlatList
             data={products}
             numColumns={2}
@@ -466,30 +476,18 @@ export function ShopScreen({ navigation, route }: Props) {
             columnWrapperStyle={{ justifyContent: 'flex-start', gap: 12 }}
             showsVerticalScrollIndicator={false}
             onEndReached={handleLoadMore}
-            onEndReachedThreshold={0.5}
-            initialNumToRender={6}
-            maxToRenderPerBatch={6}
+            onEndReachedThreshold={0.4}
+            initialNumToRender={8}
+            maxToRenderPerBatch={8}
             windowSize={5}
             removeClippedSubviews={Platform.OS === 'android'}
-            updateCellsBatchingPeriod={50}
+            updateCellsBatchingPeriod={40}
             ListFooterComponent={
               loadingMore ? (
                 <View style={{ paddingVertical: 24, alignItems: 'center' }}>
                   <ActivityIndicator color={colors.primary} />
                   <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs, marginTop: 8 }}>
                     Loading more creations...
-                  </Text>
-                </View>
-              ) : hasMore ? (
-                <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs }}>
-                    Scroll for more creations
-                  </Text>
-                </View>
-              ) : products.length > 0 ? (
-                <View style={{ paddingVertical: 32, alignItems: 'center' }}>
-                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs }}>
-                    Showing all {totalCount} exquisite pieces
                   </Text>
                 </View>
               ) : null

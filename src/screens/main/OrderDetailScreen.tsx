@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Image, ScrollView, Share,
   StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
-import { AppIcon, Screen, useAppModal } from '../../components/common';
+import { AppIcon, PageHeader, Screen, useAppModal } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { addReview, fetchInvoiceByOrderId, fetchOrderDetails, fetchOrders } from '../../services/order';
@@ -97,6 +97,7 @@ export function OrderDetailScreen({ navigation, route }: Props) {
   if (!user) {
     return (
       <Screen style={{ backgroundColor: colors.background }}>
+        <PageHeader title="Order Details" onBack={() => navigation.goBack()} />
         <View style={styles.center}>
           <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.lg }}>
             Sign In Required
@@ -118,10 +119,11 @@ export function OrderDetailScreen({ navigation, route }: Props) {
   if (loading) {
     return (
       <Screen style={{ backgroundColor: colors.background }}>
+        <PageHeader title="Order Details" onBack={() => navigation.goBack()} />
         <View style={styles.center}>
           <ActivityIndicator color={colors.primary} size="large" />
-          <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 12 }}>
-            Loading order...
+          <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 14 }}>
+            Loading order details...
           </Text>
         </View>
       </Screen>
@@ -131,6 +133,7 @@ export function OrderDetailScreen({ navigation, route }: Props) {
   if (!orderMeta && items.length === 0) {
     return (
       <Screen style={{ backgroundColor: colors.background }}>
+        <PageHeader title="Order Details" onBack={() => navigation.goBack()} />
         <View style={styles.center}>
           <AppIcon name="package-variant" size={40} color={colors.primary} />
           <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.lg, marginTop: 12 }}>
@@ -174,24 +177,18 @@ export function OrderDetailScreen({ navigation, route }: Props) {
 
   return (
     <Screen style={{ backgroundColor: colors.background }}>
-      {/* Header */}
-      <View style={[styles.header, { paddingHorizontal: spacing[4], borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={[styles.iconBtn, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderRadius: radius.full }]}
-        >
-          <AppIcon name="chevron-left" color={colors.textPrimary} size={20} />
-        </TouchableOpacity>
-        <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.lg }}>
-          Order Details
-        </Text>
-        <TouchableOpacity
-          onPress={shareOrder}
-          style={[styles.iconBtn, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderRadius: radius.full }]}
-        >
-          <AppIcon name="share-variant-outline" color={colors.textPrimary} size={18} />
-        </TouchableOpacity>
-      </View>
+      <PageHeader
+        title={`Order #${invoiceNumber}`}
+        subtitle={orderDate}
+        onBack={() => navigation.goBack()}
+        actions={[
+          {
+            icon: <AppIcon name="share-variant-outline" color={colors.textPrimary} size={18} />,
+            onPress: shareOrder,
+            accessibilityLabel: 'Share order',
+          },
+        ]}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 52 }}>
 
