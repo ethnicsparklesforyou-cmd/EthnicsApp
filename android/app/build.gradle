@@ -44,11 +44,11 @@ android {
             keyPassword 'android'
         }
         release {
-            if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
-                storeFile file(MYAPP_RELEASE_STORE_FILE)
-                storePassword MYAPP_RELEASE_STORE_PASSWORD
-                keyAlias MYAPP_RELEASE_KEY_ALIAS
-                keyPassword MYAPP_RELEASE_KEY_PASSWORD
+            if (file('release.keystore').exists()) {
+                storeFile file('release.keystore')
+                storePassword 'android123'
+                keyAlias 'my-key-alias'
+                keyPassword 'android123'
             } else if (file('my-upload-key.keystore').exists()) {
                 storeFile file('my-upload-key.keystore')
                 storePassword 'android'
