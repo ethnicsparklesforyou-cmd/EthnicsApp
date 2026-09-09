@@ -1398,11 +1398,23 @@ function CategoryGridSection({
   isDark: boolean;
 }) {
   if (!categories || categories.length === 0) return null;
-  const displayCats = categories.slice(0, 4);
+
+  const [activePage, setActivePage] = useState(0);
+  const pageWidth = W - spacing[4] * 2;
+  const cardWidth = (pageWidth - 12) / 2;
+
+  // Chunk categories into groups of 4 (2x2 per page)
+  const pages = useMemo(() => {
+    const chunks: any[][] = [];
+    for (let i = 0; i < categories.length; i += 4) {
+      chunks.push(categories.slice(i, i + 4));
+    }
+    return chunks;
+  }, [categories]);
 
   return (
-    <View style={{ marginVertical: 18, marginHorizontal: spacing[4] }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+    <View style={{ marginVertical: 18 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingHorizontal: spacing[4] }}>
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 }}>
             <AppIcon name="grid-large" size={13} color={colors.primary} />
@@ -1420,110 +1432,145 @@ function CategoryGridSection({
         </TouchableOpacity>
       </View>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-        {displayCats.map((cat, idx) => {
-          const theme = LUXURY_CATEGORY_THEMES[idx % LUXURY_CATEGORY_THEMES.length];
-          const img = getCategorySource(cat, idx);
-          return (
-            <TouchableOpacity
-              key={cat.id || idx}
-              onPress={() => goShop({ categoryId: cat.id, categoryName: cat.name })}
-              activeOpacity={0.88}
-              style={{
-                width: (W - spacing[4] * 2 - 12) / 2,
-                minHeight: 124,
-                borderRadius: 20,
-                backgroundColor: isDark ? theme.bgDark : theme.bgLight,
-                borderWidth: 1.2,
-                borderColor: isDark ? theme.borderDark : theme.borderLight,
-                padding: 14,
-                justifyContent: 'space-between',
-                shadowColor: theme.accent,
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: isDark ? 0.25 : 0.08,
-                shadowRadius: 8,
-                elevation: 3,
-                overflow: 'hidden',
-                position: 'relative',
-              }}
-            >
-              {/* Background ambient glow circle */}
-              <View
-                style={{
-                  position: 'absolute',
-                  top: -15,
-                  right: -15,
-                  width: 70,
-                  height: 70,
-                  borderRadius: 35,
-                  backgroundColor: theme.accent,
-                  opacity: isDark ? 0.15 : 0.08,
-                }}
-              />
-
-              {/* Top Row: Badge & Circular Image Shield */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <View
+      <FlatList
+        data={pages}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={pageWidth + 12}
+        snapToAlignment="start"
+        decelerationRate="fast"
+        disableIntervalMomentum
+        contentContainerStyle={{ paddingHorizontal: spacing[4], gap: 12 }}
+        keyExtractor={(_, index) => `cat-page-${index}`}
+        onMomentumScrollEnd={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+          const idx = Math.round(e.nativeEvent.contentOffset.x / (pageWidth + 12));
+          setActivePage(idx);
+        }}
+        renderItem={({ item: pageItems, index: pIdx }) => (
+          <View style={{ width: pageWidth, flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+            {pageItems.map((cat, itemIdx) => {
+              const globalIdx = pIdx * 4 + itemIdx;
+              const theme = LUXURY_CATEGORY_THEMES[globalIdx % LUXURY_CATEGORY_THEMES.length];
+              const img = getCategorySource(cat, globalIdx);
+              return (
+                <TouchableOpacity
+                  key={cat.id || globalIdx}
+                  onPress={() => goShop({ categoryId: cat.id, categoryName: cat.name })}
+                  activeOpacity={0.88}
                   style={{
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
-                    paddingHorizontal: 8,
-                    paddingVertical: 3,
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <Text style={{ color: theme.accent, fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 1 }}>
-                    {theme.badge}
-                  </Text>
-                </View>
-
-                <View
-                  style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 19,
-                    borderWidth: 1.5,
-                    borderColor: theme.accent,
-                    overflow: 'hidden',
-                    backgroundColor: colors.surface,
+                    width: cardWidth,
+                    minHeight: 124,
+                    borderRadius: 20,
+                    backgroundColor: isDark ? theme.bgDark : theme.bgLight,
+                    borderWidth: 1.2,
+                    borderColor: isDark ? theme.borderDark : theme.borderLight,
+                    padding: 14,
+                    justifyContent: 'space-between',
                     shadowColor: theme.accent,
-                    shadowOpacity: 0.2,
-                    shadowRadius: 4,
-                    elevation: 2,
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: isDark ? 0.25 : 0.08,
+                    shadowRadius: 8,
+                    elevation: 3,
+                    overflow: 'hidden',
+                    position: 'relative',
                   }}
                 >
-                  <Image source={img} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                </View>
-              </View>
-
-              {/* Bottom: Title & Explore Link */}
-              <View style={{ marginTop: 10 }}>
-                <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 16 }} numberOfLines={1}>
-                  {cat.name}
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 10.5 }}>
-                    {theme.sub}
-                  </Text>
+                  {/* Background ambient glow circle */}
                   <View
                     style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: 11,
-                      backgroundColor: isDark ? theme.iconBgDark : theme.iconBgLight,
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      position: 'absolute',
+                      top: -15,
+                      right: -15,
+                      width: 70,
+                      height: 70,
+                      borderRadius: 35,
+                      backgroundColor: theme.accent,
+                      opacity: isDark ? 0.15 : 0.08,
                     }}
-                  >
-                    <AppIcon name="arrow-top-right" size={13} color={theme.accent} />
+                  />
+
+                  {/* Top Row: Badge & Circular Image Shield */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View
+                      style={{
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                        borderRadius: 10,
+                        borderWidth: 1,
+                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                      }}
+                    >
+                      <Text style={{ color: theme.accent, fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 1 }}>
+                        {theme.badge}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: 19,
+                        borderWidth: 1.5,
+                        borderColor: theme.accent,
+                        overflow: 'hidden',
+                        backgroundColor: colors.surface,
+                        shadowColor: theme.accent,
+                        shadowOpacity: 0.2,
+                        shadowRadius: 4,
+                        elevation: 2,
+                      }}
+                    >
+                      <Image source={img} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    </View>
                   </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+
+                  {/* Bottom: Title & Explore Link */}
+                  <View style={{ marginTop: 10 }}>
+                    <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 16 }} numberOfLines={1}>
+                      {cat.name}
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                      <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 10.5 }}>
+                        {theme.sub}
+                      </Text>
+                      <View
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: 11,
+                          backgroundColor: isDark ? theme.iconBgDark : theme.iconBgLight,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <AppIcon name="arrow-top-right" size={13} color={theme.accent} />
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+      />
+
+      {/* Pagination dots if more than 1 page */}
+      {pages.length > 1 && (
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 12 }}>
+          {pages.map((_, i) => (
+            <View
+              key={i}
+              style={{
+                width: i === activePage ? 18 : 6,
+                height: 6,
+                borderRadius: 3,
+                backgroundColor: i === activePage ? colors.primary : (isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.15)'),
+              }}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -1975,7 +2022,7 @@ export function HomeScreen({ navigation }: Props) {
     },
     {
       badge: 'EVERYDAY WEAR',
-      icon: 'sparkles',
+      icon: 'creation',
       title: 'Trending Fashion Picks',
       subtitle: 'Stylish accessories & lightweight daily wear',
       bgLight: '#FFFBEB',

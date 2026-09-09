@@ -124,7 +124,7 @@ export function CheckoutScreen({ navigation }: Props) {
     fetchActiveCoupons(userType).then(res => {
       const coupons = unwrapList<any>(res);
       setAvailableCoupons(coupons);
-    }).catch(() => {});
+    }).catch(() => { });
   }, [user?.id]);
 
   useEffect(() => {
@@ -243,7 +243,7 @@ export function CheckoutScreen({ navigation }: Props) {
       const recipientName = form.recipientName.trim();
       if (recipientName && (!user?.name || user.name.trim() === 'Customer')) {
         if (user?.id) {
-          await updateUserApi(user.id, { name: recipientName }).catch(() => {});
+          await updateUserApi(user.id, { name: recipientName }).catch(() => { });
         }
         await updateUser({ name: recipientName });
         setProfileName(recipientName);
@@ -389,7 +389,7 @@ export function CheckoutScreen({ navigation }: Props) {
         title: 'Remove Item?',
         message: `Remove "${item.name}" from your order?`,
         actions: [
-          { label: 'Cancel', onPress: () => {}, variant: 'outline' },
+          { label: 'Cancel', onPress: () => { }, variant: 'outline' },
           {
             label: 'Remove',
             onPress: () => {
@@ -560,7 +560,7 @@ export function CheckoutScreen({ navigation }: Props) {
         throw new Error(checkoutRes?.statusMessage || checkoutRes?.message || 'Failed to complete COD order');
       }
 
-      await clearServerCart(estimation?.cartId || null).catch(() => {});
+      await clearServerCart(estimation?.cartId || null).catch(() => { });
       await clearCart();
       const raw = checkoutRes?.data?.data ?? checkoutRes?.data ?? checkoutRes;
       const orderIdNum = Number(raw?.order?.id ?? raw?.orderId ?? raw?.id ?? 0);
@@ -625,12 +625,12 @@ export function CheckoutScreen({ navigation }: Props) {
       }
 
       // 3. Payment succeeded -> clear cart and go to OrderSuccess
-      await clearServerCart(estimation?.cartId || null).catch(() => {});
+      await clearServerCart(estimation?.cartId || null).catch(() => { });
       await clearCart();
       navigation.replace('OrderSuccess', { invoiceNumber, orderId: dbOrderId, isCod: false });
     } catch (e: any) {
       if (createdOrderId) {
-        await cancelPayment({ orderId: createdOrderId, userId: user!.id }).catch(() => {});
+        await cancelPayment({ orderId: createdOrderId, userId: user!.id }).catch(() => { });
       }
       show({ type: 'error', title: 'Checkout Failed', message: e?.statusMessage || e?.message || 'An error occurred during checkout' });
     } finally {
@@ -672,7 +672,7 @@ export function CheckoutScreen({ navigation }: Props) {
       return result;
     } catch (error: any) {
       if (dbOrderId && !isCod) {
-        await cancelPayment({ orderId: dbOrderId, userId: user!.id }).catch(() => {});
+        await cancelPayment({ orderId: dbOrderId, userId: user!.id }).catch(() => { });
       }
       const code = error?.code ?? error?.error?.code;
       const isUserCancel = code === 0 || String(error?.description || error?.message || '').toLowerCase().includes('cancel');
@@ -1024,17 +1024,28 @@ export function CheckoutScreen({ navigation }: Props) {
               style={[
                 styles.paymentOptionCard,
                 {
-                  borderColor: paymentMethod === 'cod' ? colors.primary : colors.border,
-                  backgroundColor: paymentMethod === 'cod' ? colors.primary + '0A' : colors.surfaceElevated,
+                  borderColor: paymentMethod === 'cod'
+                    ? (isDark ? '#F59E0B' : '#D97706')
+                    : (isDark ? '#4A351D' : '#E8D2B5'),
+                  backgroundColor: paymentMethod === 'cod'
+                    ? (isDark ? '#2B1A06' : '#FEF8EE')
+                    : (isDark ? '#1C160F' : '#FFFDF9'),
+                  borderWidth: paymentMethod === 'cod' ? 1.8 : 1.5,
                   marginTop: 10,
                 }
               ]}
             >
-              <View style={[styles.customRadioCircle, { borderColor: paymentMethod === 'cod' ? colors.primary : colors.border }]}>
-                {paymentMethod === 'cod' && <View style={[styles.customRadioDot, { backgroundColor: colors.primary }]} />}
+              <View style={[styles.customRadioCircle, { borderColor: paymentMethod === 'cod' ? (isDark ? '#F59E0B' : '#D97706') : (isDark ? '#5A4329' : '#C7A981') }]}>
+                {paymentMethod === 'cod' && <View style={[styles.customRadioDot, { backgroundColor: isDark ? '#F59E0B' : '#D97706' }]} />}
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={[styles.paymentOptionTitle, { color: colors.textPrimary, fontFamily: fontFamily.sansBold }]}>Cash on Delivery</Text>
+                <View style={styles.paymentMethodTitleRow}>
+                  <Text style={[styles.paymentOptionTitle, { color: colors.textPrimary, fontFamily: fontFamily.sansBold }]}>Cash on Delivery</Text>
+                  <View style={[styles.codBadge, { backgroundColor: isDark ? '#3D1A04' : '#FEF3C7', borderColor: isDark ? '#78350F' : '#FDE68A' }]}>
+                    <AppIcon name="truck-delivery-outline" size={10} color={isDark ? '#FBBF24' : '#B45309'} />
+                    <Text style={[styles.codBadgeText, { color: isDark ? '#FDE68A' : '#B45309' }]}>PAY ON DELIVERY</Text>
+                  </View>
+                </View>
                 <Text style={[styles.paymentOptionSub, { color: colors.textMuted, fontFamily: fontFamily.sans }]}>
                   Advance booking verification charge of ₹{estimation?.codCharges ?? 75}
                 </Text>
@@ -1357,8 +1368,8 @@ export function CheckoutScreen({ navigation }: Props) {
               {isB2bBelowMinOrder
                 ? `Min ₹3,000 Required`
                 : paymentMethod === 'cod'
-                ? 'Confirm COD Order'
-                : 'Proceed to Pay'}
+                  ? 'Confirm COD Order'
+                  : 'Proceed to Pay'}
             </Text>
           )}
         </TouchableOpacity>
@@ -1990,6 +2001,19 @@ const styles = StyleSheet.create({
   instantBadgeText: {
     fontSize: 8.5,
     color: '#059669',
+    fontWeight: '800',
+  },
+  codBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2.5,
+    borderWidth: 1,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  codBadgeText: {
+    fontSize: 8.5,
     fontWeight: '800',
   },
   paymentOptionSub: {
