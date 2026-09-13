@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { PageHeader, Screen, useAppModal } from '../../components/common';
+import { AppIcon, PageHeader, Screen, useAppModal } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -191,7 +191,10 @@ export function CartScreen({ navigation }: Props) {
   const subtotal = optimisticTotalAmount;
   const gstRate = estimation?.gstRate ?? 3;
   const gstAmount = subtotal * gstRate / 100;
-  const shipping = estimation?.shippingCharge ?? estimation?.deliveryEstimate?.freight_charge ?? 0;
+  const rawShipping = estimation?.shippingCharge ?? estimation?.deliveryEstimate?.freight_charge ?? 80;
+  const shipping = !isB2bUser
+    ? (subtotal >= 1000 ? 0 : rawShipping)
+    : (estimation?.shippingCharge ?? estimation?.deliveryEstimate?.freight_charge ?? 0);
   const shippingPartner = estimation?.shippingPartner ?? estimation?.deliveryEstimate?.courier_name ?? null;
   const effectiveShipping = hasAddress ? shipping : 0;
   const finalAmount = subtotal + gstAmount + effectiveShipping;
@@ -429,17 +432,19 @@ export function CartScreen({ navigation }: Props) {
               )}
 
               {/* Free shipping threshold (B2C only) */}
-              {!isB2bUser && subtotal > 0 && subtotal <= 1000 && (
-                <View style={[styles.infoBanner, { backgroundColor: '#F0FDFA', borderColor: '#99F6E4', borderRadius: radius.lg, marginTop: 10 }]}>
-                  <Text style={{ color: '#0F766E', fontFamily: fontFamily.sans, fontSize: fontSize.xs }}>
-                    Add ₹{(1001 - subtotal).toLocaleString('en-IN')} more for free shipping!
+              {!isB2bUser && subtotal > 0 && subtotal < 1000 && (
+                <View style={[styles.infoBanner, { backgroundColor: '#F0FDFA', borderColor: '#99F6E4', borderRadius: radius.lg, marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+                  <AppIcon name="truck-delivery-outline" size={16} color="#0D9488" />
+                  <Text style={{ color: '#0F766E', fontFamily: fontFamily.sansMedium, fontSize: fontSize.xs, flex: 1 }}>
+                    Add ₹{(1000 - subtotal).toLocaleString('en-IN')} more to unlock <Text style={{ fontFamily: fontFamily.sansBold }}>FREE Shipping</Text>!
                   </Text>
                 </View>
               )}
-              {!isB2bUser && shipping === 0 && subtotal > 1000 && hasAddress && (
-                <View style={[styles.infoBanner, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0', borderRadius: radius.lg, marginTop: 10 }]}>
-                  <Text style={{ color: '#16A34A', fontFamily: fontFamily.sans, fontSize: fontSize.xs }}>
-                    ✓ Free shipping applied on orders above ₹1,000!
+              {!isB2bUser && subtotal >= 1000 && (
+                <View style={[styles.infoBanner, { backgroundColor: '#F0FDF4', borderColor: '#86EFAC', borderRadius: radius.lg, marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+                  <AppIcon name="party-popper" size={16} color="#16A34A" />
+                  <Text style={{ color: '#15803D', fontFamily: fontFamily.sansMedium, fontSize: fontSize.xs, flex: 1 }}>
+                    <Text style={{ fontFamily: fontFamily.sansBold }}>Yay! Congratulations</Text>, you unlocked <Text style={{ fontFamily: fontFamily.sansBold, color: '#16A34A' }}>FREE Shipping</Text>! 🎉
                   </Text>
                 </View>
               )}

@@ -366,8 +366,11 @@ export function CheckoutScreen({ navigation }: Props) {
 
   const gstRate = estimation?.gstRate ?? 3;
   const gstAmount = Number(((subtotal * gstRate) / 100).toFixed(2));
+  const rawShipping = estimation?.shippingCharge ?? estimation?.deliveryEstimate?.freight_charge ?? 80;
   const shipping = selectedAddress
-    ? (estimation?.shippingCharge ?? estimation?.deliveryEstimate?.freight_charge ?? (isB2bUser ? 0 : (subtotal > 999 ? 0 : 80)))
+    ? (!isB2bUser
+        ? (subtotal >= 1000 ? 0 : rawShipping)
+        : (estimation?.shippingCharge ?? estimation?.deliveryEstimate?.freight_charge ?? 0))
     : 0;
   const shippingPartner = estimation?.shippingPartner ?? estimation?.deliveryEstimate?.courier_name ?? null;
   const codCharge = paymentMethod === 'cod' ? (estimation?.codCharges ?? 75) : 0;
@@ -1249,6 +1252,24 @@ export function CheckoutScreen({ navigation }: Props) {
               {selectedAddress ? (shipping === 0 ? 'FREE' : `₹${shipping.toLocaleString('en-IN')}`) : 'Add address'}
             </Text>
           </View>
+
+          {!isB2bUser && subtotal >= 1000 && (
+            <View style={{ backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#86EFAC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, marginVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <AppIcon name="party-popper" size={15} color="#16A34A" />
+              <Text style={{ color: '#15803D', fontFamily: fontFamily.sansMedium, fontSize: 11.5, flex: 1 }}>
+                <Text style={{ fontFamily: fontFamily.sansBold }}>Yay! Congratulations</Text>, you unlocked <Text style={{ fontFamily: fontFamily.sansBold, color: '#16A34A' }}>FREE Shipping</Text>! 🎉
+              </Text>
+            </View>
+          )}
+
+          {!isB2bUser && subtotal > 0 && subtotal < 1000 && (
+            <View style={{ backgroundColor: '#F0FDFA', borderWidth: 1, borderColor: '#99F6E4', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, marginVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <AppIcon name="truck-delivery-outline" size={15} color="#0D9488" />
+              <Text style={{ color: '#0F766E', fontFamily: fontFamily.sansMedium, fontSize: 11.5, flex: 1 }}>
+                Add ₹{(1000 - subtotal).toLocaleString('en-IN')} more to unlock <Text style={{ fontFamily: fontFamily.sansBold }}>FREE Shipping</Text>!
+              </Text>
+            </View>
+          )}
 
           {giftingTotal > 0 && (
             <View style={styles.billDetailRow}>

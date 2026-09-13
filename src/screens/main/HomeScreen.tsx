@@ -200,7 +200,7 @@ const PROMO_ITEMS = [
   {
     icon: 'truck-fast-outline',
     title: 'Free Delivery',
-    subtitle: '₹999 and above',
+    subtitle: '₹1,000 and above',
   },
   {
     icon: 'shield-check-outline',
