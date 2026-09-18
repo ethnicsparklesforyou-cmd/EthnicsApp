@@ -46,12 +46,22 @@ export type ProductFilters = {
 };
 
 export async function fetchProducts(filters: ProductFilters = {}) {
-  const response = await fetch(`${API_BASE_URL}products/fetch`, {
+  const queryParams = new URLSearchParams();
+  queryParams.set('isB2b', 'false');
+  const url = `${API_BASE_URL}products/fetch?${queryParams.toString()}`;
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ page: 1, limit: 20, ...filters }),
+    body: JSON.stringify({ page: 1, limit: 20, isB2b: false, ...filters }),
   });
-  return response.json();
+  const data = await response.json();
+  // Safe filtering: Ensure only Retail (not B2B-only) products are returned
+  if (data?.data?.products && Array.isArray(data.data.products)) {
+    data.data.products = data.data.products.filter(
+      (p: any) => !p.isB2b || p.isB2b === 0 || p.isB2b === '0' || p.isB2b === false || p.isBoth === 1 || p.isBoth === '1' || p.isBoth === true
+    );
+  }
+  return data;
 }
 
 export async function fetchProductById(id: number) {

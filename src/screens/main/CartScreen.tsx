@@ -88,6 +88,7 @@ export function CartScreen({ navigation }: Props) {
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [hasAddress, setHasAddress] = useState(false);
   const [shippingPincode, setShippingPincode] = useState<string>('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const pendingRemovals = useRef<Set<string>>(new Set());
 
   const isB2bUser = user?.userRole === 2 || user?.roleName === 'B2b Customer';
@@ -135,6 +136,68 @@ export function CartScreen({ navigation }: Props) {
   );
   const optimisticTotalItems = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
   const optimisticTotalAmount = useMemo(() => items.reduce((sum, item) => sum + getEffectiveUnitPrice(item) * item.quantity, 0), [items]);
+
+  const allSelected = items.length > 0 && selectedIds.size === items.length;
+
+  const toggleSelect = (pId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(pId)) {
+        next.delete(pId);
+      } else {
+        next.add(pId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(items.map(i => String(i.productId ?? i.id))));
+    }
+  };
+
+  const handleBulkRemove = () => {
+    if (selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    show({
+      type: 'confirm',
+      title: 'Remove Items',
+      message: `Remove ${count} selected ${count === 1 ? 'item' : 'items'} from your cart?`,
+      actions: [
+        { label: 'Cancel', onPress: () => {}, variant: 'outline' },
+        {
+          label: `Remove (${count})`,
+          variant: 'danger',
+          onPress: async () => {
+            const idsToRemove = Array.from(selectedIds);
+            idsToRemove.forEach(strPid => pendingRemovals.current.add(strPid));
+            setServerItems(prev => prev.filter(i => !idsToRemove.includes(String(i.productId)) && !idsToRemove.includes(String(i.id))));
+
+            const serverPromises: Promise<any>[] = [];
+            idsToRemove.forEach(strPid => {
+              const itemObj = items.find(i => String(i.productId ?? i.id) === strPid);
+              const pIdNum = (itemObj?.productId ?? Number(strPid)) || strPid;
+              removeItem(pIdNum);
+              if (isAuthenticated && user?.id) {
+                const targetCartItemId = itemObj?.cartItemId ?? itemObj?.id ?? pIdNum;
+                serverPromises.push(removeServerCartItemOrProduct(user.id, targetCartItemId, pIdNum));
+              }
+            });
+
+            setSelectedIds(new Set());
+            if (serverPromises.length > 0) {
+              await Promise.allSettled(serverPromises);
+            }
+            idsToRemove.forEach(strPid => pendingRemovals.current.delete(strPid));
+            void refreshEstimation(shippingPincode || undefined);
+          },
+        },
+      ],
+    });
+  };
 
   const refreshEstimation = async (pincode?: string) => {
     if (!user?.id) return;
@@ -275,7 +338,47 @@ export function CartScreen({ navigation }: Props) {
         keyExtractor={item => String(item.productId)}
         contentContainerStyle={{ paddingHorizontal: spacing[5], paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          items.length > 0 ? (
+            <View style={styles.selectionBar}>
+              <TouchableOpacity
+                onPress={toggleSelectAll}
+                style={styles.selectAllBtn}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.checkbox,
+                  {
+                    borderColor: allSelected ? colors.primary : colors.border,
+                    backgroundColor: allSelected ? colors.primary : 'transparent',
+                    borderRadius: 5,
+                  }
+                ]}>
+                  {allSelected && <AppIcon name="check" size={12} color="#fff" />}
+                </View>
+                <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.xs, marginLeft: 8 }}>
+                  Select All ({items.length})
+                </Text>
+              </TouchableOpacity>
+
+              {selectedIds.size > 0 && (
+                <TouchableOpacity
+                  onPress={handleBulkRemove}
+                  style={styles.bulkRemoveBtn}
+                  activeOpacity={0.7}
+                >
+                  <AppIcon name="trash-can-outline" size={14} color="#DC2626" />
+                  <Text style={{ color: '#DC2626', fontFamily: fontFamily.sansBold, fontSize: fontSize.xs, marginLeft: 4 }}>
+                    Remove ({selectedIds.size})
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : null
+        }
         renderItem={({ item }) => {
+          const pIdStr = String(item.productId ?? item.id);
+          const isSelected = selectedIds.has(pIdStr);
           const effectivePrice = getEffectiveUnitPrice(item);
           const originalPrice = Number(item.basePrice || item.price || 0);
           const hasDiscount = !isB2bUser && item.discountPrice > 0 && item.discountPrice < originalPrice;
@@ -313,9 +416,32 @@ export function CartScreen({ navigation }: Props) {
               </View>
 
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.sm, lineHeight: 18 }} numberOfLines={2}>
-                  {item.name}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                  <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.sm, lineHeight: 18, flex: 1, marginRight: 8 }} numberOfLines={2}>
+                    {item.name}
+                  </Text>
+
+                  {/* Normal checkbox on right side of card */}
+                  <TouchableOpacity
+                    onPress={() => toggleSelect(pIdStr)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.7}
+                    style={{ paddingTop: 1 }}
+                  >
+                    <View
+                      style={[
+                        styles.checkbox,
+                        {
+                          borderColor: isSelected ? colors.primary : colors.border,
+                          backgroundColor: isSelected ? colors.primary : 'transparent',
+                          borderRadius: 5,
+                        }
+                      ]}
+                    >
+                      {isSelected && <AppIcon name="check" size={12} color="#fff" />}
+                    </View>
+                  </TouchableOpacity>
+                </View>
 
                 {/* Size + weight tags */}
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
@@ -359,13 +485,15 @@ export function CartScreen({ navigation }: Props) {
                   )}
                 </View>
 
-                {/* Qty stepper + remove */}
+                {/* Qty stepper + delete icon */}
                 <View style={styles.qtyRow}>
-                  <View style={[styles.qtyControl, { borderColor: colors.border, borderRadius: radius.lg }]}>
+                  <View style={[styles.qtyControl, { borderColor: colors.border, backgroundColor: colors.surfaceElevated, borderRadius: radius.lg }]}>
                     <TouchableOpacity
                       onPress={() => item.quantity > 1 ? handleQtyChange(item, item.quantity - 1) : handleRemove(item)}
-                      style={styles.qtyBtn}>
-                      <Text style={{ color: colors.primary, fontSize: 18, fontWeight: '600', lineHeight: 20 }}>−</Text>
+                      style={styles.qtyBtn}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    >
+                      <AppIcon name={item.quantity === 1 ? 'trash-can-outline' : 'minus'} size={13} color={item.quantity === 1 ? '#EF4444' : colors.textPrimary} />
                     </TouchableOpacity>
                     <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.sm, minWidth: 24, textAlign: 'center' }}>
                       {item.quantity}
@@ -373,18 +501,24 @@ export function CartScreen({ navigation }: Props) {
                     <TouchableOpacity
                       onPress={() => handleQtyChange(item, item.quantity + 1)}
                       disabled={item.quantity >= maxQty}
-                      style={[styles.qtyBtn, { opacity: item.quantity >= maxQty ? 0.3 : 1 }]}>
-                      <Text style={{ color: colors.primary, fontSize: 18, fontWeight: '600', lineHeight: 20 }}>+</Text>
+                      style={[styles.qtyBtn, { opacity: item.quantity >= maxQty ? 0.3 : 1 }]}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    >
+                      <AppIcon name="plus" size={13} color={colors.textPrimary} />
                     </TouchableOpacity>
                   </View>
-                  <TouchableOpacity onPress={() => handleRemove(item)} style={styles.removeBtn}>
-                    <Text style={{ color: colors.error, fontFamily: fontFamily.sansMedium, fontSize: fontSize.xs }}>
-                      Remove
-                    </Text>
+
+                  <TouchableOpacity
+                    onPress={() => handleRemove(item)}
+                    style={[styles.deleteIconBtn, { backgroundColor: '#FEE2E2', borderRadius: radius.md }]}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.7}
+                  >
+                    <AppIcon name="trash-can-outline" size={16} color="#DC2626" />
                   </TouchableOpacity>
                 </View>
                 {maxQty > 0 && (
-                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 10, marginTop: 6 }}>
+                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 10, marginTop: 4 }}>
                     Max {maxQty} in cart
                   </Text>
                 )}
@@ -660,6 +794,33 @@ const styles = StyleSheet.create({
   emptyBag: { width: 32, height: 24, borderWidth: 2, borderRadius: 4, marginTop: 10 },
   emptyHandle: { position: 'absolute', top: 14, width: 16, height: 12, borderTopLeftRadius: 8, borderTopRightRadius: 8, borderWidth: 2, borderBottomWidth: 0 },
   shopBtn: { paddingHorizontal: 28, paddingVertical: 14 },
+  selectionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    paddingVertical: 8,
+    marginBottom: 6,
+  },
+  selectAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 18,
+    height: 18,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bulkRemoveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 6,
+  },
   cartItem: { flexDirection: 'row', borderWidth: 1, padding: 14, marginBottom: 12, gap: 12 },
   itemImg: { width: 86, height: 86 },
   outOfStockOverlay: { position: 'absolute', top: 0, left: 0, width: 86, height: 86, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
@@ -667,10 +828,10 @@ const styles = StyleSheet.create({
   discountBadge: { position: 'absolute', top: -4, right: -4, paddingHorizontal: 5, paddingVertical: 2, borderRadius: 10 },
   discountBadgeText: { color: '#fff', fontSize: 9, fontWeight: '700' },
   tag: { paddingHorizontal: 8, paddingVertical: 3 },
-  qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 },
-  qtyControl: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, gap: 2 },
-  qtyBtn: { paddingHorizontal: 12, paddingVertical: 6 },
-  removeBtn: { paddingHorizontal: 10, paddingVertical: 6 },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
+  qtyControl: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, paddingHorizontal: 4, paddingVertical: 2 },
+  qtyBtn: { paddingHorizontal: 8, paddingVertical: 4 },
+  deleteIconBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   summary: { borderWidth: 1, padding: 16, marginTop: 4 },
   sumRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   divider: { height: 1, marginVertical: 10 },

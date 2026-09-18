@@ -424,6 +424,62 @@ export function CheckoutScreen({ navigation }: Props) {
     }
   }, [displayItems.length, isB2bUser, navigation, removeItem, selectedAddress, show, updateQty]);
 
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+
+  const allCheckoutItemsSelected = displayItems.length > 0 && selectedItemIds.size === displayItems.length;
+
+  const toggleSelectCheckoutItem = (pId: string) => {
+    setSelectedItemIds(prev => {
+      const next = new Set(prev);
+      if (next.has(pId)) {
+        next.delete(pId);
+      } else {
+        next.add(pId);
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectAllCheckoutItems = () => {
+    if (allCheckoutItemsSelected) {
+      setSelectedItemIds(new Set());
+    } else {
+      setSelectedItemIds(new Set(displayItems.map(i => String(i.productId ?? i.id))));
+    }
+  };
+
+  const handleBulkRemoveCheckoutItems = () => {
+    if (selectedItemIds.size === 0) return;
+    const count = selectedItemIds.size;
+    show({
+      type: 'confirm',
+      title: 'Remove Items',
+      message: `Remove ${count} selected ${count === 1 ? 'item' : 'items'} from your order?`,
+      actions: [
+        { label: 'Cancel', onPress: () => {}, variant: 'outline' },
+        {
+          label: `Remove (${count})`,
+          variant: 'danger',
+          onPress: () => {
+            const idsToRemove = Array.from(selectedItemIds);
+            idsToRemove.forEach(strPid => {
+              const itemObj = displayItems.find(i => String(i.productId ?? i.id) === strPid);
+              const pIdNum = (itemObj?.productId ?? Number(strPid)) || strPid;
+              removeItem(pIdNum);
+            });
+            setSelectedItemIds(new Set());
+            if (idsToRemove.length >= displayItems.length) {
+              navigation.goBack();
+            } else if (selectedAddress) {
+              const pin = getPostalCode(selectedAddress);
+              if (pin) void refreshEstimation(pin);
+            }
+          },
+        },
+      ],
+    });
+  };
+
   const toggleGiftWrap = (giftKey: string) => {
     setGiftingItemKeys(prev => prev.includes(giftKey) ? prev.filter(k => k !== giftKey) : [...prev, giftKey]);
   };
@@ -880,9 +936,48 @@ export function CheckoutScreen({ navigation }: Props) {
                 Order Items ({totalItemCount})
               </Text>
             </View>
+
+            {displayItems.length > 0 && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <TouchableOpacity
+                  onPress={toggleSelectAllCheckoutItems}
+                  style={styles.checkoutSelectAllBtn}
+                  activeOpacity={0.7}
+                >
+                  <View style={[
+                    styles.checkoutMiniCheckbox,
+                    {
+                      borderColor: allCheckoutItemsSelected ? colors.primary : colors.border,
+                      backgroundColor: allCheckoutItemsSelected ? colors.primary : 'transparent',
+                      borderRadius: 4,
+                    }
+                  ]}>
+                    {allCheckoutItemsSelected && <AppIcon name="check" size={10} color="#fff" />}
+                  </View>
+                  <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansMedium, fontSize: fontSize.xs, marginLeft: 4 }}>
+                    Select All
+                  </Text>
+                </TouchableOpacity>
+
+                {selectedItemIds.size > 0 && (
+                  <TouchableOpacity
+                    onPress={handleBulkRemoveCheckoutItems}
+                    style={[styles.checkoutBulkRemoveBtn, { backgroundColor: '#FEE2E2', borderRadius: radius.md }]}
+                    activeOpacity={0.7}
+                  >
+                    <AppIcon name="trash-can-outline" size={13} color="#DC2626" />
+                    <Text style={{ color: '#DC2626', fontFamily: fontFamily.sansBold, fontSize: 11, marginLeft: 3 }}>
+                      Remove ({selectedItemIds.size})
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
           </View>
 
           {displayItems.map((item, index) => {
+            const pIdStr = String(item.productId ?? item.id);
+            const isItemSelected = selectedItemIds.has(pIdStr);
             const giftKey = getGiftKey(item);
             const isGiftWrapped = giftingItemKeys.includes(giftKey);
             const effectivePrice = getEffectiveUnitPrice(item);
@@ -895,7 +990,10 @@ export function CheckoutScreen({ navigation }: Props) {
                 key={`${item.id}-${index}`}
                 style={[
                   styles.itemRowContainer,
-                  { borderBottomColor: colors.border, borderBottomWidth: index < displayItems.length - 1 ? 1 : 0 }
+                  {
+                    borderBottomColor: colors.border,
+                    borderBottomWidth: index < displayItems.length - 1 ? 1 : 0,
+                  }
                 ]}
               >
                 {imageUrl ? (
@@ -907,9 +1005,30 @@ export function CheckoutScreen({ navigation }: Props) {
                 )}
 
                 <View style={styles.itemContentCol}>
-                  <Text numberOfLines={2} style={[styles.itemTitleText, { color: colors.textPrimary, fontFamily: fontFamily.sansBold }]}>
-                    {item.name}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                    <Text numberOfLines={2} style={[styles.itemTitleText, { color: colors.textPrimary, fontFamily: fontFamily.sansBold, flex: 1, marginRight: 8 }]}>
+                      {item.name}
+                    </Text>
+
+                    {/* Normal checkbox on right side of card */}
+                    <TouchableOpacity
+                      onPress={() => toggleSelectCheckoutItem(pIdStr)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      activeOpacity={0.7}
+                      style={{ paddingTop: 1 }}
+                    >
+                      <View style={[
+                        styles.checkoutMiniCheckbox,
+                        {
+                          borderColor: isItemSelected ? colors.primary : colors.border,
+                          backgroundColor: isItemSelected ? colors.primary : 'transparent',
+                          borderRadius: 4,
+                        }
+                      ]}>
+                        {isItemSelected && <AppIcon name="check" size={10} color="#fff" />}
+                      </View>
+                    </TouchableOpacity>
+                  </View>
 
                   <View style={styles.itemMetaTagsRow}>
                     <View style={[styles.checkoutQtyStepper, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
@@ -1875,6 +1994,33 @@ const styles = StyleSheet.create({
   noAddressSub: {
     fontSize: 11.5,
     marginTop: 1,
+  },
+
+  /* Multi-select Header & Checkbox Controls */
+  checkoutSelectAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+  },
+  checkoutMiniCheckbox: {
+    width: 17,
+    height: 17,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkoutBulkRemoveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  checkoutItemCheckboxTouch: {
+    paddingRight: 8,
+    paddingVertical: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   /* Item Row Container */
