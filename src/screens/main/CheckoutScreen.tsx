@@ -559,6 +559,15 @@ export function CheckoutScreen({ navigation }: Props) {
       show({ type: 'warning', title: 'Minimum Order Required', message: `B2B orders require a minimum order value of ₹${B2B_MIN_ORDER.toLocaleString('en-IN')}. Please add more items.` });
       return;
     }
+
+    // Auto-sync profile name to backend so email/SMS/invoice notifications have proper name
+    if (profileName.trim() && profileName.trim() !== user?.name && user?.id) {
+      try {
+        await updateUserApi(user.id, { name: profileName.trim() });
+        await updateUser({ name: profileName.trim() });
+      } catch {}
+    }
+
     if (paymentMethod === 'cod') {
       await handleCodOrderFlow();
       return;

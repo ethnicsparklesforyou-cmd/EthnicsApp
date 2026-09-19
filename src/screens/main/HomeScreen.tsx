@@ -29,8 +29,10 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { fetchActiveBanners, fetchCategories, fetchProducts } from '../../services/products';
+import { fetchAllHomeSections } from '../../services/homeSections';
 import { fetchAddresses } from '../../services/address';
-import { getBannerImageUrl } from '../../utils/imageUtils';
+import { getBannerImageUrl, getFirstImageUrl, prefetchProductImages } from '../../utils/imageUtils';
+import { trackAdModalSwipe } from '../../services/adModalTracker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppIcon, LocationSelectModal } from '../../components/common';
 import { LOCATION_STORAGE_KEY } from '../../components/common/LocationSelectModal';
@@ -307,7 +309,7 @@ const DiscoveryCard = React.memo(function DiscoveryCard({
   cardHeight: number;
   onPress: () => void;
 }) {
-  const uri = item.images?.[0]?.imageUrl || item.imageUrl || null;
+  const uri = getFirstImageUrl(item, 700) || item.imageUrl || null;
   const rawB2b = item.b2bPrice ? parseFloat(item.b2bPrice) : 0;
   const rawBase = parseFloat(item.basePrice || item.price || '0');
   const rawDiscount = parseFloat(item.discountPrice || '0');
@@ -330,6 +332,20 @@ const DiscoveryCard = React.memo(function DiscoveryCard({
         borderWidth: 1,
       }}
     >
+      {/* Luxury Placeholder / Loading Canvas */}
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: isDark ? '#232034' : '#F7F5FA',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        ]}
+      >
+        <AppIcon name="diamond-stone" size={56} color={isDark ? 'rgba(192, 132, 252, 0.35)' : 'rgba(124, 58, 237, 0.25)'} />
+      </View>
+
       {/* Product Image */}
       {uri ? (
         <Image
@@ -338,11 +354,7 @@ const DiscoveryCard = React.memo(function DiscoveryCard({
           resizeMode="cover"
           fadeDuration={0}
         />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? '#232034' : '#F7F5FA', alignItems: 'center', justifyContent: 'center' }]}>
-          <AppIcon name="diamond-stone" size={56} color={colors.primary} />
-        </View>
-      )}
+      ) : null}
 
       {/* Top Badges */}
       <View
@@ -424,6 +436,7 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
   isDark: boolean;
 }) {
   const { toggle } = useWishlist();
+  const { user } = useAuth();
   const screenDims = Dimensions.get('window');
   const W_MODAL = screenDims.width;
   const H_MODAL = screenDims.height;
@@ -494,6 +507,7 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
 
         if (newUniques.length > 0) {
           setDeckProducts(prev => [...prev, ...newUniques]);
+          prefetchProductImages(newUniques, 15, 700);
         }
         pageRef.current = pageToFetch;
         hasMoreRef.current = pagination.hasNextPage ?? (raw.length >= 10);
@@ -530,6 +544,7 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
         });
         if (initialUniques.length > 0) {
           setDeckProducts(initialUniques);
+          prefetchProductImages(initialUniques, 20, 700);
         }
       }
       fetchMoreDeckProducts(1);
@@ -549,6 +564,7 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
       });
       if (initialUniques.length > 0) {
         setDeckProducts(initialUniques);
+        prefetchProductImages(initialUniques, 20, 700);
       }
     }
   }, [products]);
@@ -556,13 +572,8 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
   // Image pre-fetching for instant, zero-delay card reveals
   useEffect(() => {
     if (deckProducts.length > currentIndex) {
-      const upcoming = deckProducts.slice(currentIndex, currentIndex + 10);
-      upcoming.forEach(item => {
-        const uri = item.images?.[0]?.imageUrl || item.imageUrl;
-        if (uri && typeof uri === 'string') {
-          Image.prefetch(uri).catch(() => { });
-        }
-      });
+      const upcoming = deckProducts.slice(currentIndex, currentIndex + 12);
+      prefetchProductImages(upcoming, 12, 700);
     }
   }, [currentIndex, deckProducts]);
 
@@ -591,8 +602,13 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
     }
 
     const currentItem = dProds[cIdx];
-    if (direction === 'right' && currentItem?.id) {
-      deckStateRef.current.toggle(currentItem.id).catch(() => { });
+    if (currentItem?.id) {
+      if (direction === 'right') {
+        deckStateRef.current.toggle(currentItem.id).catch(() => { });
+        trackAdModalSwipe({ productId: currentItem.id, action: 'like', source: 'retail_app', userId: user?.id }).catch(() => { });
+      } else {
+        trackAdModalSwipe({ productId: currentItem.id, action: 'unlike', source: 'retail_app', userId: user?.id }).catch(() => { });
+      }
     }
 
     const toX = direction === 'right' ? W_MODAL * 1.5 : -W_MODAL * 1.5;
@@ -1884,11 +1900,12 @@ export function HomeScreen({ navigation }: Props) {
 
   const loadInitial = useCallback(async () => {
     try {
-      const [banRes, catRes, p1Res, p2Res] = await Promise.allSettled([
+      const [banRes, catRes, p1Res, p2Res, sectionsRes] = await Promise.allSettled([
         fetchActiveBanners(),
         fetchCategories(),
         fetchProducts({ page: 1, limit: 16, sortBy: 'createAt', sortOrder: 'DESC' }),
         fetchProducts({ page: 2, limit: 16, sortBy: 'createAt', sortOrder: 'DESC' }),
+        fetchAllHomeSections('retail'),
       ]);
       if (banRes.status === 'fulfilled') setBanners(unwrapArray(banRes.value));
       if (catRes.status === 'fulfilled') setCategories(unwrapArray(catRes.value));
@@ -1912,17 +1929,36 @@ export function HomeScreen({ navigation }: Props) {
       const uniqueProds = Array.from(new Map(inStockAll.map(item => [String(item.id), item])).values());
 
       if (uniqueProds.length > 0) {
-        // Slice into non-overlapping arrays so every section shows distinct products
-        const na = uniqueProds.slice(0, 6);
-        const ex = uniqueProds.slice(6, 12);
-        const fl = uniqueProds.slice(12, 18);
-        const tr = uniqueProds.slice(18, 24);
+        // Proactively warm image cache for instant AdModal & discovery experience
+        prefetchProductImages(uniqueProds, 20, 700);
+
+        // Fallback sliced arrays if any section is not customized in admin panel
+        const naFallback = uniqueProds.slice(0, 6);
+        const exFallback = uniqueProds.slice(6, 12);
+        const flFallback = uniqueProds.slice(12, 18);
+        const trFallback = uniqueProds.slice(18, 24);
         const ft = uniqueProds.slice(24);
 
-        setNewArrivals(na.length > 0 ? na : uniqueProds);
-        setExpressDrops(ex.length > 0 ? ex : uniqueProds);
-        setFlashSale(fl.length > 0 ? fl : uniqueProds);
-        setTrending(tr.length > 0 ? tr : uniqueProds);
+        // Curated sections from backend
+        const curatedSections = sectionsRes.status === 'fulfilled' ? sectionsRes.value : null;
+
+        const naCustom = curatedSections?.new_arrivals && curatedSections.new_arrivals.length > 0
+          ? curatedSections.new_arrivals
+          : null;
+        const exCustom = curatedSections?.curated_picks && curatedSections.curated_picks.length > 0
+          ? curatedSections.curated_picks
+          : null;
+        const flCustom = curatedSections?.exclusive_deals && curatedSections.exclusive_deals.length > 0
+          ? curatedSections.exclusive_deals
+          : null;
+        const trCustom = curatedSections?.trending_now && curatedSections.trending_now.length > 0
+          ? curatedSections.trending_now
+          : null;
+
+        setNewArrivals(naCustom || (naFallback.length > 0 ? naFallback : uniqueProds));
+        setExpressDrops(exCustom || (exFallback.length > 0 ? exFallback : uniqueProds));
+        setFlashSale(flCustom || (flFallback.length > 0 ? flFallback : uniqueProds));
+        setTrending(trCustom || (trFallback.length > 0 ? trFallback : uniqueProds));
         setFeatured(ft.length > 0 ? ft : uniqueProds);
         setFeatPage(2);
       }
