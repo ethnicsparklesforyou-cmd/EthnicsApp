@@ -1,18 +1,25 @@
-export const sanitizePhone = (phone: string) => {
+export const sanitizePhone = (phone: string, dialCode = '+91') => {
   if (!phone) return '';
   let digits = phone.replace(/\D/g, '');
-  if (digits.length === 12 && digits.startsWith('91')) {
-    digits = digits.slice(2);
-  } else if (digits.length === 11 && digits.startsWith('0')) {
-    digits = digits.slice(1);
+  if (dialCode === '+91' || dialCode === '91') {
+    if (digits.length === 12 && digits.startsWith('91')) {
+      digits = digits.slice(2);
+    } else if (digits.length === 11 && digits.startsWith('0')) {
+      digits = digits.slice(1);
+    }
+    return digits.slice(0, 10);
   }
-  return digits.slice(0, 10);
+  return digits.slice(0, 15);
 };
 
-export const isValidPhone = (phone: string) => {
-  const cleaned = sanitizePhone(phone);
-  return /^[6-9]\d{9}$/.test(cleaned);
+export const isValidPhone = (phone: string, dialCode = '+91') => {
+  const cleaned = sanitizePhone(phone, dialCode);
+  if (dialCode === '+91' || dialCode === '91') {
+    return /^[6-9]\d{9}$/.test(cleaned);
+  }
+  return cleaned.length >= 7 && cleaned.length <= 15;
 };
+
 
 export const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());

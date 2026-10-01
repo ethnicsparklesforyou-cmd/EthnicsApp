@@ -35,7 +35,8 @@ export async function verifyOtp(payload: Record<string, unknown>) {
   return postJson<AuthPayload | { isExist?: boolean }>('verify/confirm-otp', payload);
 }
 
-export async function registerWithPhone(payload: { phone: string; accountType: 'retail' | 'b2b' }) {
+export async function registerWithPhone(payload: { phone: string; countryCode?: string; accountType: 'retail' | 'b2b' }) {
   return postJson<AuthPayload>('users/register-with-phone', payload);
 }
+
 

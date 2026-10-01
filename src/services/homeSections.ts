@@ -1,11 +1,17 @@
 import { API_BASE_URL, ApiResponse } from './api';
 import { Product } from './products';
 
+export type SectionMeta = {
+  title?: string;
+  description?: string;
+};
+
 export type HomeSectionsMap = {
   new_arrivals: Product[];
   curated_picks: Product[];
   exclusive_deals: Product[];
   trending_now: Product[];
+  meta?: Record<string, SectionMeta>;
 };
 
 /**
@@ -32,6 +38,7 @@ export async function fetchAllHomeSections(appType: string = 'retail'): Promise<
       curated_picks: Array.isArray(data?.curated_picks) ? data.curated_picks : [],
       exclusive_deals: Array.isArray(data?.exclusive_deals) ? data.exclusive_deals : [],
       trending_now: Array.isArray(data?.trending_now) ? data.trending_now : [],
+      meta: data?.meta || {},
     };
   } catch (error) {
     console.warn('Failed to fetch home sections from API:', error);

@@ -309,7 +309,7 @@ const DiscoveryCard = React.memo(function DiscoveryCard({
   cardHeight: number;
   onPress: () => void;
 }) {
-  const uri = getFirstImageUrl(item, 700) || item.imageUrl || null;
+  const uri = getFirstImageUrl(item, 450) || item.imageUrl || null;
   const rawB2b = item.b2bPrice ? parseFloat(item.b2bPrice) : 0;
   const rawBase = parseFloat(item.basePrice || item.price || '0');
   const rawDiscount = parseFloat(item.discountPrice || '0');
@@ -349,10 +349,10 @@ const DiscoveryCard = React.memo(function DiscoveryCard({
       {/* Product Image */}
       {uri ? (
         <Image
-          source={{ uri }}
+          source={{ uri } as any}
           style={StyleSheet.absoluteFill}
           resizeMode="cover"
-          fadeDuration={0}
+          fadeDuration={100}
         />
       ) : null}
 
@@ -490,7 +490,7 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
     isFetchingRef.current = true;
     const pageToFetch = pageNum ?? (pageRef.current + 1);
     try {
-      const res = await fetchProducts({ page: pageToFetch, limit: 30, sortBy: 'createAt', sortOrder: 'DESC' });
+      const res = await fetchProducts({ page: pageToFetch, limit: 20, sortBy: 'createAt', sortOrder: 'DESC' });
       const raw = extractProducts(res);
       const pagination = res?.data?.pagination || res?.pagination || {};
 
@@ -507,10 +507,10 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
 
         if (newUniques.length > 0) {
           setDeckProducts(prev => [...prev, ...newUniques]);
-          prefetchProductImages(newUniques, 15, 700);
+          prefetchProductImages(newUniques, 4, 450);
         }
         pageRef.current = pageToFetch;
-        hasMoreRef.current = pagination.hasNextPage ?? (raw.length >= 10);
+        hasMoreRef.current = pagination.hasNextPage ?? (raw.length >= 20);
       } else {
         hasMoreRef.current = false;
       }
@@ -535,7 +535,7 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
       if (products && products.length > 0) {
         const inStock = products.filter((p: any) => p && p.id && (p.stockQuantity === undefined || p.stockQuantity === null || Number(p.stockQuantity) > 0));
         const initialUniques: any[] = [];
-        inStock.forEach((p: any) => {
+        inStock.slice(0, 20).forEach((p: any) => {
           const key = String(p.id);
           if (!seenIdsRef.current.has(key)) {
             seenIdsRef.current.add(key);
@@ -544,10 +544,11 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
         });
         if (initialUniques.length > 0) {
           setDeckProducts(initialUniques);
-          prefetchProductImages(initialUniques, 20, 700);
+          prefetchProductImages(initialUniques, 4, 450);
         }
+      } else {
+        fetchMoreDeckProducts(1);
       }
-      fetchMoreDeckProducts(1);
     }
   }, [visible]);
 
@@ -555,7 +556,7 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
     if (products && products.length > 0 && deckProducts.length === 0) {
       const inStock = products.filter((p: any) => p && p.id && (p.stockQuantity === undefined || p.stockQuantity === null || Number(p.stockQuantity) > 0));
       const initialUniques: any[] = [];
-      inStock.forEach((p: any) => {
+      inStock.slice(0, 20).forEach((p: any) => {
         const key = String(p.id);
         if (!seenIdsRef.current.has(key)) {
           seenIdsRef.current.add(key);
@@ -564,7 +565,7 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
       });
       if (initialUniques.length > 0) {
         setDeckProducts(initialUniques);
-        prefetchProductImages(initialUniques, 20, 700);
+        prefetchProductImages(initialUniques, 4, 450);
       }
     }
   }, [products]);
@@ -572,16 +573,17 @@ function AdModal({ visible, onClose, colors, fontFamily, fontSize, radius, produ
   // Image pre-fetching for instant, zero-delay card reveals
   useEffect(() => {
     if (deckProducts.length > currentIndex) {
-      const upcoming = deckProducts.slice(currentIndex, currentIndex + 12);
-      prefetchProductImages(upcoming, 12, 700);
+      const upcoming = deckProducts.slice(currentIndex, currentIndex + 3);
+      prefetchProductImages(upcoming, 3, 450);
     }
   }, [currentIndex, deckProducts]);
 
   const checkPagination = useCallback((nextIdx: number) => {
-    if (nextIdx >= deckProducts.length - 6) {
+    if (nextIdx >= deckProducts.length - 4) {
       fetchMoreDeckProducts();
     }
   }, [deckProducts.length]);
+
 
   const deckStateRef = useRef({ currentIndex, deckProducts, toggle, checkPagination, onClose, goProduct });
   useEffect(() => {
@@ -1065,6 +1067,8 @@ function FlashCountdownSection({
   spacing,
   radius,
   isDark,
+  title,
+  subtitle,
 }: {
   products: any[];
   goProduct: (id: number) => void;
@@ -1075,6 +1079,8 @@ function FlashCountdownSection({
   spacing: any;
   radius: any;
   isDark: boolean;
+  title?: string;
+  subtitle?: string;
 }) {
   const [timeLeft, setTimeLeft] = useState({ hours: 14, minutes: 32, seconds: 45 });
 
@@ -1111,10 +1117,10 @@ function FlashCountdownSection({
               </View>
             </View>
             <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 23, letterSpacing: -0.5 }}>
-              24-Hour Exclusive Deals
+              {title || '24-Hour Exclusive Deals'}
             </Text>
             <Text style={{ color: isDark ? '#FDA4AF' : '#9F1239', fontFamily: fontFamily.sans, fontSize: 11.5, marginTop: 2 }}>
-              Special jewellery markdowns & deals closing soon
+              {subtitle || 'Special jewellery markdowns & deals closing soon'}
             </Text>
           </View>
 
@@ -1163,6 +1169,8 @@ function FeaturedSpotlightSection({
   spacing,
   radius,
   isDark,
+  title,
+  subtitle,
 }: {
   products: any[];
   goProduct: (id: number) => void;
@@ -1173,6 +1181,8 @@ function FeaturedSpotlightSection({
   spacing: any;
   radius: any;
   isDark: boolean;
+  title?: string;
+  subtitle?: string;
 }) {
   return (
     <View style={[styles.premiumSection, { marginTop: spacing[6] }]}>
@@ -1190,10 +1200,10 @@ function FeaturedSpotlightSection({
               </View>
             </View>
             <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: -0.5 }}>
-              Curated Picks
+              {title || 'Curated Picks'}
             </Text>
             <Text style={{ color: isDark ? '#A7F3D0' : '#047857', fontFamily: fontFamily.sans, fontSize: 11.5, marginTop: 2 }}>
-              Handcrafted statement pieces & festive essentials
+              {subtitle || 'Handcrafted statement pieces & festive essentials'}
             </Text>
           </View>
 
@@ -1746,6 +1756,7 @@ export function HomeScreen({ navigation }: Props) {
   const [flashSale, setFlashSale] = useState<any[]>([]);
   const [trending, setTrending] = useState<any[]>([]);
   const [featured, setFeatured] = useState<any[]>([]);
+  const [sectionMetas, setSectionMetas] = useState<Record<string, { title?: string; description?: string }>>({});
   const [featPage, setFeatPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -1930,7 +1941,8 @@ export function HomeScreen({ navigation }: Props) {
 
       if (uniqueProds.length > 0) {
         // Proactively warm image cache for instant AdModal & discovery experience
-        prefetchProductImages(uniqueProds, 20, 700);
+        prefetchProductImages(uniqueProds, 4, 450);
+
 
         // Fallback sliced arrays if any section is not customized in admin panel
         const naFallback = uniqueProds.slice(0, 6);
@@ -1954,6 +1966,10 @@ export function HomeScreen({ navigation }: Props) {
         const trCustom = curatedSections?.trending_now && curatedSections.trending_now.length > 0
           ? curatedSections.trending_now
           : null;
+
+        if (curatedSections?.meta) {
+          setSectionMetas(curatedSections.meta);
+        }
 
         setNewArrivals(naCustom || (naFallback.length > 0 ? naFallback : uniqueProds));
         setExpressDrops(exCustom || (exFallback.length > 0 ? exFallback : uniqueProds));
@@ -2392,10 +2408,10 @@ export function HomeScreen({ navigation }: Props) {
                         </View>
                       </View>
                       <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: -0.5 }}>
-                        New Arrivals
+                        {sectionMetas.new_arrivals?.title || 'New Arrivals'}
                       </Text>
                       <Text style={{ color: isDark ? '#94A3B8' : '#64748B', fontFamily: fontFamily.sans, fontSize: 11.5, marginTop: 2 }}>
-                        Freshly crafted designer jewellery & latest season drops
+                        {sectionMetas.new_arrivals?.description || 'Freshly crafted designer jewellery & latest season drops'}
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -2447,6 +2463,8 @@ export function HomeScreen({ navigation }: Props) {
                 spacing={spacing}
                 radius={radius}
                 isDark={isDark}
+                title={sectionMetas.curated_picks?.title}
+                subtitle={sectionMetas.curated_picks?.description}
               />
             )}
 
@@ -2462,6 +2480,8 @@ export function HomeScreen({ navigation }: Props) {
                 spacing={spacing}
                 radius={radius}
                 isDark={isDark}
+                title={sectionMetas.exclusive_deals?.title}
+                subtitle={sectionMetas.exclusive_deals?.description}
               />
             )}
 
@@ -2484,10 +2504,10 @@ export function HomeScreen({ navigation }: Props) {
                         </View>
                       </View>
                       <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 24, letterSpacing: -0.5 }}>
-                        Trending Now
+                        {sectionMetas.trending_now?.title || 'Trending Now'}
                       </Text>
                       <Text style={{ color: isDark ? '#CBD5E1' : '#78716C', fontFamily: fontFamily.sans, fontSize: 11.5, marginTop: 2 }}>
-                        Top-selling jewellery styles loved by customers this week
+                        {sectionMetas.trending_now?.description || 'Top-selling jewellery styles loved by customers this week'}
                       </Text>
                     </View>
                     <TouchableOpacity

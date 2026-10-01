@@ -14,7 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../context/ThemeContext';
-import { Button, Input, Logo, Screen } from '../../components/common';
+import { Button, Input, Logo, Screen, CountryPickerModal } from '../../components/common';
 import { AppIcon } from '../../components/common';
 import { OtpInput } from '../../components/common/OtpInput';
 import type { OtpInputHandle } from '../../components/common/OtpInput';
@@ -24,6 +24,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { addToServerCart } from '../../services/cart';
 import type { AuthStackParamList } from '../../navigation/types';
+import { DEFAULT_COUNTRY, type CountryItem } from '../../constants/countries';
 
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'> };
 type Step = 'phone' | 'otp';
@@ -37,6 +38,8 @@ export function LoginScreen({ navigation: _navigation }: Props) {
   const bottomInset = Math.max(insets.bottom, 24);
 
   const [step, setStep] = useState<Step>('phone');
+  const [selectedCountry, setSelectedCountry] = useState<CountryItem>(DEFAULT_COUNTRY);
+  const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -78,13 +81,24 @@ export function LoginScreen({ navigation: _navigation }: Props) {
   };
 
   const handlePhoneSubmit = async () => {
-    const clean = sanitizePhone(phone);
-    if (!isValidPhone(clean)) { setPhoneError('Enter a valid 10-digit mobile number'); return; }
+    const clean = sanitizePhone(phone, selectedCountry.dial_code);
+    if (!isValidPhone(clean, selectedCountry.dial_code)) {
+      const errorMsg = selectedCountry.dial_code === '+91'
+        ? 'Enter a valid 10-digit mobile number'
+        : 'Enter a valid phone number';
+      setPhoneError(errorMsg);
+      return;
+    }
     setPhoneError(''); setError(''); setLoading(true);
 
     // Apple Review / Demo Account bypass to ensure seamless review
     if (clean === '9876543210' || clean === '9999999999' || clean === '9999988888') {
-      sendOtpRequest({ contactType: 'mobile', contactValue: clean, isLoginAuth: true }).catch(() => {});
+      sendOtpRequest({
+        contactType: 'mobile',
+        contactValue: clean,
+        countryCode: selectedCountry.dial_code,
+        isLoginAuth: true,
+      }).catch(() => {});
       setStep('otp');
       startTimer();
       setTimeout(() => {
@@ -95,7 +109,12 @@ export function LoginScreen({ navigation: _navigation }: Props) {
     }
 
     try {
-      const res = await sendOtpRequest({ contactType: 'mobile', contactValue: clean, isLoginAuth: true });
+      const res = await sendOtpRequest({
+        contactType: 'mobile',
+        contactValue: clean,
+        countryCode: selectedCountry.dial_code,
+        isLoginAuth: true,
+      });
       const bodyStatus = (res.json as any)?.status;
       if (res.ok || bodyStatus === 200) {
         setStep('otp');
@@ -124,9 +143,13 @@ export function LoginScreen({ navigation: _navigation }: Props) {
   };
 
   const handleRegister = async (accountType: 'retail' | 'b2b') => {
-    const clean = sanitizePhone(phone);
+    const clean = sanitizePhone(phone, selectedCountry.dial_code);
     try {
-      const res = await registerWithPhone({ phone: clean, accountType });
+      const res = await registerWithPhone({
+        phone: clean,
+        countryCode: selectedCountry.dial_code,
+        accountType,
+      });
       const payload = (res.json as any)?.data;
       if (res.ok && payload?.user && payload?.token) {
         if (isB2bAccount(payload.user)) {
@@ -150,12 +173,18 @@ export function LoginScreen({ navigation: _navigation }: Props) {
   };
 
   const verifyCode = async (otp: string) => {
-    const clean = sanitizePhone(phone);
+    const clean = sanitizePhone(phone, selectedCountry.dial_code);
     setLoading(true); setError('');
     const isDemoNumber = clean === '9876543210' || clean === '9999999999' || clean === '9999988888';
 
     try {
-      const res = await verifyOtpRequest({ contactType: 'mobile', contactValue: clean, otpCode: otp, isLoginAuth: true });
+      const res = await verifyOtpRequest({
+        contactType: 'mobile',
+        contactValue: clean,
+        countryCode: selectedCountry.dial_code,
+        otpCode: otp,
+        isLoginAuth: true,
+      });
       const payload = (res.json as any)?.data;
       if (res.ok && payload?.isExist && payload?.user && payload?.token) {
         if (isB2bAccount(payload.user)) {
@@ -198,10 +227,15 @@ export function LoginScreen({ navigation: _navigation }: Props) {
 
   const resendOtp = async () => {
     if (resendTimer > 0) return;
-    const clean = sanitizePhone(phone);
+    const clean = sanitizePhone(phone, selectedCountry.dial_code);
     setError(''); setLoading(true);
     try {
-      const res = await sendOtpRequest({ contactType: 'mobile', contactValue: clean, isLoginAuth: true });
+      const res = await sendOtpRequest({
+        contactType: 'mobile',
+        contactValue: clean,
+        countryCode: selectedCountry.dial_code,
+        isLoginAuth: true,
+      });
       const bodyStatus = (res.json as any)?.status;
       if (res.ok || bodyStatus === 200) { startTimer(); otpRef.current?.reset(); }
       else { setError((res.json as any).statusMessage || 'Failed to resend OTP'); }
@@ -211,7 +245,7 @@ export function LoginScreen({ navigation: _navigation }: Props) {
 
   const stepTitle = step === 'otp' ? 'Verify OTP' : 'Welcome Back';
   const stepSub = step === 'otp'
-    ? `Code sent to +91 ${phone}`
+    ? `Code sent to ${selectedCountry.dial_code} ${phone}`
     : 'Sign in or create your account';
 
   return (
@@ -274,17 +308,45 @@ export function LoginScreen({ navigation: _navigation }: Props) {
             {step === 'phone' && (
               <>
                 <View style={styles.phoneRow}>
-                  <View style={[styles.countryCode, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderRadius: radius.md }]}>
-                    <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>+91</Text>
-                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => setCountryPickerVisible(true)}
+                    style={[
+                      styles.countryCode,
+                      {
+                        backgroundColor: colors.surfaceElevated,
+                        borderColor: colors.border,
+                        borderRadius: radius.md,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.flagText}>{selectedCountry.flag}</Text>
+                    <Text
+                      style={{
+                        color: colors.textPrimary,
+                        fontFamily: fontFamily.sansBold,
+                        fontSize: fontSize.sm,
+                      }}
+                    >
+                      {selectedCountry.dial_code}
+                    </Text>
+                    <AppIcon name="chevron-down" size={14} color={colors.textMuted} />
+                  </TouchableOpacity>
                   <View style={{ flex: 1 }}>
                     <Input
                       label="Mobile Number"
                       value={phone}
-                      onChangeText={v => { setPhone(sanitizePhone(v)); setPhoneError(''); }}
+                      onChangeText={v => {
+                        setPhone(sanitizePhone(v, selectedCountry.dial_code));
+                        setPhoneError('');
+                      }}
                       keyboardType="phone-pad"
-                      maxLength={15}
-                      placeholder="10-digit mobile number"
+                      maxLength={selectedCountry.dial_code === '+91' ? 10 : 15}
+                      placeholder={
+                        selectedCountry.dial_code === '+91'
+                          ? '10-digit mobile number'
+                          : 'Phone number'
+                      }
                       error={phoneError}
                     />
                   </View>
@@ -343,6 +405,18 @@ export function LoginScreen({ navigation: _navigation }: Props) {
           </View>
         </Animated.View>
       </KeyboardAvoidingView>
+
+      {/* Country Code Picker Modal */}
+      <CountryPickerModal
+        visible={countryPickerVisible}
+        onClose={() => setCountryPickerVisible(false)}
+        onSelect={country => {
+          setSelectedCountry(country);
+          setPhone('');
+          setPhoneError('');
+        }}
+        selectedCode={selectedCountry.dial_code}
+      />
     </Screen>
   );
 }
@@ -359,8 +433,9 @@ const styles = StyleSheet.create({
   closeBtn: { padding: 4, alignItems: 'center', justifyContent: 'center' },
   skipBtn: { paddingVertical: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   sheetBody: { paddingTop: 6 },
-  phoneRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, marginBottom: 12 },
-  countryCode: { height: 52, width: 72, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  phoneRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 12 },
+  countryCode: { height: 52, paddingHorizontal: 10, borderWidth: 1.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, marginBottom: 16 },
+  flagText: { fontSize: 18 },
   resendRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 16 },
   phoneBadge: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, padding: 12, marginBottom: 20 },
   typeGrid: { flexDirection: 'row', gap: 12, marginBottom: 8 },
@@ -368,3 +443,4 @@ const styles = StyleSheet.create({
   typeIconWrap: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
   errorBox: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, padding: 10, marginTop: 10 },
 });
+

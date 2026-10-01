@@ -16,7 +16,7 @@ export function normalizeUrl(url: string | null | undefined): string {
  */
 export function getOptimizedImageUrl(
   url: string | null | undefined,
-  width: number = 700,
+  width: number = 450,
   quality: string = 'auto:good'
 ): string | null {
   if (!url) return null;
@@ -25,15 +25,15 @@ export function getOptimizedImageUrl(
 
   // Cloudinary on-the-fly dynamic resizing and compression
   if (normalized.includes('res.cloudinary.com') && normalized.includes('/image/upload/')) {
-    // Avoid duplicate transformations
+    const transform = `f_auto,q_${quality},w_${width},c_limit`;
+    // If already has transformation, replace it
     if (
       normalized.includes('/f_auto') ||
       normalized.includes('/q_auto') ||
       normalized.includes('/w_')
     ) {
-      return normalized;
+      return normalized.replace(/\/image\/upload\/[^\/]+\//, `/image/upload/${transform}/`);
     }
-    const transform = `f_auto,q_${quality},w_${width},c_limit`;
     return normalized.replace('/image/upload/', `/image/upload/${transform}/`);
   }
 
@@ -41,7 +41,7 @@ export function getOptimizedImageUrl(
 }
 
 // Utility to extract the first image URL from a product object with optional auto-optimization
-export function getFirstImageUrl(product: any, optimizeWidth?: number): string | null {
+export function getFirstImageUrl(product: any, optimizeWidth: number = 450): string | null {
   if (!product) return null;
 
   let rawUrl: string | null = null;
@@ -80,7 +80,7 @@ export function getFirstImageUrl(product: any, optimizeWidth?: number): string |
 /**
  * Prefetch a batch of product images into native memory/disk cache ahead of time
  */
-export function prefetchProductImages(products: any[], maxCount: number = 15, optimizeWidth: number = 700): void {
+export function prefetchProductImages(products: any[], maxCount: number = 6, optimizeWidth: number = 450): void {
   if (!Array.isArray(products) || products.length === 0) return;
   const targetBatch = products.slice(0, maxCount);
   targetBatch.forEach(product => {
@@ -94,6 +94,7 @@ export function prefetchProductImages(products: any[], maxCount: number = 15, op
     }
   });
 }
+
 
 export function getCategoryImageUrl(category: any): string | null {
   if (!category) return null;

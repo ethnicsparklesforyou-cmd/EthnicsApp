@@ -9,3 +9,5 @@ export { PageHeader } from './PageHeader';
 export { AppModalProvider, useAppModal } from './AppModal';
 export { AppIcon } from './AppIcon';
 export { LocationSelectModal } from './LocationSelectModal';
+export { CountryPickerModal } from './CountryPickerModal';
+
