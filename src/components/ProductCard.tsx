@@ -7,7 +7,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { getFirstImageUrl } from '../utils/imageUtils';
 import type { MainStackParamList } from '../navigation/types';
-import { AppIcon } from './common';
+import { AppIcon, AppGradient } from './common';
 
 type Props = { product: any; onPress: () => void };
 
@@ -209,10 +209,11 @@ function ProductCardComponent({ product, onPress }: Props) {
                       updateQty(targetId, qtyInCart - 1);
                     }
                   }}
-                  style={[styles.qtyBtn, { backgroundColor: colors.primary }]}
                   activeOpacity={0.7}
                   hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-                  <AppIcon name="minus" size={11} color="#fff" />
+                  <AppGradient style={styles.qtyBtn}>
+                    <AppIcon name="minus" size={11} color="#fff" />
+                  </AppGradient>
                 </TouchableOpacity>
 
                 <Text style={[styles.qtyText, { color: colors.textPrimary, fontFamily: fontFamily.sansBold }]}>
@@ -227,10 +228,11 @@ function ProductCardComponent({ product, onPress }: Props) {
                       updateQty(targetId, qtyInCart + 1);
                     }
                   }}
-                  style={[styles.qtyBtn, { backgroundColor: colors.primary }]}
                   activeOpacity={0.7}
                   hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
-                  <AppIcon name="plus" size={11} color="#fff" />
+                  <AppGradient style={styles.qtyBtn}>
+                    <AppIcon name="plus" size={11} color="#fff" />
+                  </AppGradient>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -238,12 +240,10 @@ function ProductCardComponent({ product, onPress }: Props) {
                 onPress={() => {
                   addItem({ productId: product.id, name: product.name, price: finalPrice, quantity: 1, image: imageUrl || undefined });
                 }}
-                style={[
-                  styles.quickAddBtnOuter,
-                  { backgroundColor: colors.primary }
-                ]}
                 activeOpacity={0.8}>
-                <AppIcon name="plus" size={14} color="#fff" />
+                <AppGradient style={styles.quickAddBtnOuter}>
+                  <AppIcon name="plus" size={14} color="#fff" />
+                </AppGradient>
               </TouchableOpacity>
             )
           )}

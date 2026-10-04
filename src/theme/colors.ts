@@ -1,9 +1,9 @@
 export const palette = {
-  // Brand core — Royal Amethyst Purple, Vibrant Rose Pink & 18K Gold Accents
-  primary: '#7C3AED',        // Vibrant Royal Purple
-  primaryLight: '#A78BFA',   // Soft Lavender Purple
-  primaryDark: '#5B21B6',    // Deep Imperial Violet
-  rose: '#EC4899',           // Hot Rose Pink
+  // Brand core — Royal Amethyst Purple (Light to Dark Gradient Depth), Vibrant Rose Pink & 18K Gold
+  primary: '#7C3AED',        // Vibrant Royal Amethyst Purple
+  primaryLight: '#C084FC',   // Radiant Soft Orchid (Light Purple/Pink Undertone)
+  primaryDark: '#581C87',    // Deep Imperial Velvet Purple (Rich Dark Tone)
+  rose: '#EC4899',           // Hot Rose Pink Accent
   roseDark: '#BE185D',       // Crimson Rose
   gold: '#F59E0B',           // 18K Champagne Gold
 

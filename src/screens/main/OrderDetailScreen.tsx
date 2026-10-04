@@ -1,10 +1,9 @@
-/* eslint-disable react-native/no-inline-styles */
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator, Image, ScrollView, Share,
   StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
-import { AppIcon, PageHeader, Screen, useAppModal } from '../../components/common';
+import { AppIcon, AppGradient, PageHeader, Screen, useAppModal } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { addReview, fetchInvoiceByOrderId, fetchOrderDetails, fetchOrders } from '../../services/order';
@@ -107,9 +106,12 @@ export function OrderDetailScreen({ navigation, route }: Props) {
           </Text>
           <TouchableOpacity
             onPress={() => navigation.getParent()?.navigate('Auth' as never)}
-            style={{ backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 20, paddingHorizontal: 28, paddingVertical: 12 }}
+            activeOpacity={0.88}
+            style={{ marginTop: 20 }}
           >
-            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+            <AppGradient style={{ paddingHorizontal: 28, paddingVertical: 12, borderRadius: radius.xl, alignItems: 'center' }}>
+              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+            </AppGradient>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -295,6 +297,7 @@ export function OrderDetailScreen({ navigation, route }: Props) {
                       />
                       <TouchableOpacity
                         disabled={submittingReview === item.productId || draft.rating === 0}
+                        activeOpacity={0.88}
                         onPress={async () => {
                           if (!draft.rating) return;
                           setSubmittingReview(item.productId);
@@ -306,15 +309,21 @@ export function OrderDetailScreen({ navigation, route }: Props) {
                             setSubmittingReview(null);
                           }
                         }}
-                        style={[styles.reviewBtn, {
-                          backgroundColor: draft.rating > 0 ? colors.primary : colors.border,
-                          borderRadius: radius.md,
-                          opacity: submittingReview === item.productId ? 0.7 : 1,
-                        }]}
+                        style={{ opacity: submittingReview === item.productId ? 0.7 : 1 }}
                       >
-                        <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.sm }}>
-                          {submittingReview === item.productId ? 'Submitting...' : 'Submit Review'}
-                        </Text>
+                        {draft.rating > 0 ? (
+                          <AppGradient style={[styles.reviewBtn, { borderRadius: radius.md }]}>
+                            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.sm }}>
+                              {submittingReview === item.productId ? 'Submitting...' : 'Submit Review'}
+                            </Text>
+                          </AppGradient>
+                        ) : (
+                          <View style={[styles.reviewBtn, { backgroundColor: colors.border, borderRadius: radius.md }]}>
+                            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.sm }}>
+                              Submit Review
+                            </Text>
+                          </View>
+                        )}
                       </TouchableOpacity>
                     </View>
                   )}
@@ -402,22 +411,33 @@ export function OrderDetailScreen({ navigation, route }: Props) {
           <TouchableOpacity
             onPress={handleDownloadInvoice}
             disabled={downloadingPdf || invoiceLoading}
-            activeOpacity={0.85}
-            style={[styles.downloadBtn, {
-              backgroundColor: colors.primary + '12',
-              borderColor: colors.primary + '40',
-              borderRadius: radius.lg,
+            activeOpacity={0.88}
+            style={{
               marginTop: 16,
               opacity: downloadingPdf ? 0.6 : 1,
-            }]}
+            }}
           >
-            {downloadingPdf
-              ? <ActivityIndicator color={colors.primary} size="small" />
-              : <AppIcon name="download-outline" color={colors.primary} size={18} />
-            }
-            <Text style={{ color: colors.primary, fontFamily: fontFamily.sansBold, fontSize: fontSize.sm }}>
-              {downloadingPdf ? 'Preparing...' : 'Download Invoice'}
-            </Text>
+            <AppGradient
+              style={[
+                styles.downloadBtn,
+                {
+                  borderRadius: radius.lg,
+                  shadowColor: '#EC4899',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.28,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }
+              ]}
+            >
+              {downloadingPdf
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <AppIcon name="download-outline" color="#FFFFFF" size={18} />
+              }
+              <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: fontSize.sm }}>
+                {downloadingPdf ? 'Preparing...' : 'Download Invoice'}
+              </Text>
+            </AppGradient>
           </TouchableOpacity>
         </View>
 

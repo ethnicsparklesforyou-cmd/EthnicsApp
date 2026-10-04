@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppIcon, PageHeader, Screen } from '../../components/common';
+import { AppIcon, AppGradient, PageHeader, Screen } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { fetchOrders } from '../../services/order';
@@ -42,9 +42,12 @@ export function OrdersScreen({ navigation }: Props) {
           </Text>
           <TouchableOpacity
             onPress={() => navigation.getParent()?.navigate('Auth' as never)}
-            style={[styles.shopBtn, { backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 24 }]}
+            activeOpacity={0.88}
+            style={{ marginTop: 24 }}
           >
-            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+            <AppGradient style={[styles.shopBtn, { borderRadius: radius.xl }]}>
+              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+            </AppGradient>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -79,9 +82,12 @@ export function OrdersScreen({ navigation }: Props) {
           </Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('HomeTabs', { screen: 'Shop' } as any)}
-            style={[styles.shopBtn, { backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 24 }]}
+            activeOpacity={0.88}
+            style={{ marginTop: 24 }}
           >
-            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Start Shopping</Text>
+            <AppGradient style={[styles.shopBtn, { borderRadius: radius.xl }]}>
+              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Start Shopping</Text>
+            </AppGradient>
           </TouchableOpacity>
         </View>
       ) : (

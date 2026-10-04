@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppIcon, ConfirmModal, PageHeader, Screen, useAppModal } from '../../components/common';
+import { AppIcon, AppGradient, ConfirmModal, PageHeader, Screen, useAppModal } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -65,11 +65,14 @@ export function AccountScreen({ navigation }: Props) {
           </Text>
           <TouchableOpacity
             onPress={() => navigation.getParent()?.navigate('Auth' as never)}
-            style={[styles.signInBtn, { backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 28 }]}
+            activeOpacity={0.88}
+            style={{ width: '100%', marginTop: 28 }}
           >
-            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base, letterSpacing: 0.5 }}>
-              Sign In / Register
-            </Text>
+            <AppGradient style={[styles.signInBtn, { borderRadius: radius.xl }]}>
+              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base, letterSpacing: 0.5 }}>
+                Sign In / Register
+              </Text>
+            </AppGradient>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -82,38 +85,49 @@ export function AccountScreen({ navigation }: Props) {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 60 }}>
 
         {/* ── Hero Profile Card ── */}
-        <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>
+        <AppGradient
+          style={[
+            styles.heroCard,
+            {
+              shadowColor: '#EC4899',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.35,
+              shadowRadius: 10,
+              elevation: 6,
+            }
+          ]}
+        >
           <View style={styles.heroInner}>
-            <View style={[styles.avatarLg, { backgroundColor: 'rgba(255,255,255,0.2)', borderColor: 'rgba(255,255,255,0.5)' }]}>
+            <View style={[styles.avatarLg, { backgroundColor: 'rgba(255,255,255,0.22)', borderColor: 'rgba(255,255,255,0.6)' }]}>
               <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: 28 }}>{getInitials(name)}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.xl }} numberOfLines={1}>{name}</Text>
               {phone ? (
-                <Text style={{ color: 'rgba(255,255,255,0.8)', fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 3 }}>
+                <Text style={{ color: 'rgba(255,255,255,0.85)', fontFamily: fontFamily.sans, fontSize: fontSize.sm, marginTop: 3 }}>
                   +91 {phone}
                 </Text>
               ) : null}
-              <View style={[styles.rolePill, { backgroundColor: 'rgba(255,255,255,0.2)', marginTop: 8 }]}>
-                <Text style={{ color: '#fff', fontFamily: fontFamily.sansMedium, fontSize: 11 }}>{roleLabel}</Text>
+              <View style={[styles.rolePill, { backgroundColor: 'rgba(255,255,255,0.25)', marginTop: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)' }]}>
+                <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: 11 }}>{roleLabel}</Text>
               </View>
             </View>
           </View>
 
           {/* Stats Row */}
-          <View style={[styles.statsRow, { borderTopColor: 'rgba(255,255,255,0.2)' }]}>
+          <View style={[styles.statsRow, { borderTopColor: 'rgba(255,255,255,0.22)' }]}>
             {[
               { label: 'Cart Items', value: String(totalItems) },
               { label: 'Wishlist', value: String(ids.size) },
               { label: 'Member', value: user?.userRole === 2 ? 'B2B' : 'Retail' },
             ].map((s, i) => (
-              <View key={s.label} style={[styles.statItem, i < 2 && { borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,0.2)' }]}>
+              <View key={s.label} style={[styles.statItem, i < 2 && { borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,0.22)' }]}>
                 <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.xl }}>{s.value}</Text>
-                <Text style={{ color: 'rgba(255,255,255,0.75)', fontFamily: fontFamily.sans, fontSize: 11, marginTop: 2 }}>{s.label}</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.85)', fontFamily: fontFamily.sans, fontSize: 11, marginTop: 2 }}>{s.label}</Text>
               </View>
             ))}
           </View>
-        </View>
+        </AppGradient>
 
         {/* ── Main Menu Section ── */}
         <View style={[styles.section, { marginHorizontal: spacing[4], marginTop: spacing[4], backgroundColor: colors.surfaceElevated, borderColor: colors.border + '60', borderRadius: radius.xl, borderWidth: 1 }]}>
@@ -124,9 +138,9 @@ export function AccountScreen({ navigation }: Props) {
               activeOpacity={0.7}
               style={[styles.menuRow, idx < MENU.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border + '40' }]}
             >
-              <View style={[styles.menuIcon, { backgroundColor: colors.primary + '12', borderRadius: radius.lg }]}>
-                <AppIcon name={item.icon as any} color={colors.primary} size={20} />
-              </View>
+              <AppGradient style={[styles.menuIcon, { borderRadius: radius.lg }]}>
+                <AppIcon name={item.icon as any} color="#FFFFFF" size={20} />
+              </AppGradient>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>{item.label}</Text>
                 <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs, marginTop: 2 }}>{item.sub}</Text>
@@ -173,7 +187,7 @@ export function AccountScreen({ navigation }: Props) {
 
         {/* App version */}
         <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs, textAlign: 'center', marginTop: 24 }}>
-          Ethnics Retail v1.0 · EEAS Lifestyle
+          Ethnics Retail v1.0.7 · EEAS Lifestyle
         </Text>
 
       </ScrollView>

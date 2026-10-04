@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppIcon, PageHeader, Screen, useAppModal } from '../../components/common';
+import { AppIcon, AppGradient, PageHeader, Screen, useAppModal } from '../../components/common';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { useTheme } from '../../context/ThemeContext';
@@ -62,9 +62,12 @@ export function AddressesScreen({ navigation }: Props) {
           </Text>
           <TouchableOpacity
             onPress={() => navigation.getParent()?.navigate('Auth' as never)}
-            style={{ backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 24, paddingHorizontal: 32, paddingVertical: 14 }}
+            activeOpacity={0.88}
+            style={{ marginTop: 24 }}
           >
-            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+            <AppGradient style={{ paddingHorizontal: 32, paddingVertical: 14, borderRadius: radius.xl, alignItems: 'center' }}>
+              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+            </AppGradient>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -219,9 +222,12 @@ export function AddressesScreen({ navigation }: Props) {
             </Text>
             <TouchableOpacity
               onPress={() => setShowForm(true)}
-              style={[styles.addBtn, { backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 24 }]}
+              activeOpacity={0.88}
+              style={{ marginTop: 24 }}
             >
-              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>+ Add Address</Text>
+              <AppGradient style={[styles.addBtn, { borderRadius: radius.xl }]}>
+                <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>+ Add Address</Text>
+              </AppGradient>
             </TouchableOpacity>
           </View>
         ) : (

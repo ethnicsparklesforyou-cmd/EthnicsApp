@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { AppIcon, PageHeader, Screen, useAppModal } from '../../components/common';
+import { AppIcon, AppGradient, PageHeader, Screen, useAppModal } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -315,10 +315,14 @@ export function CartScreen({ navigation }: Props) {
           </Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('HomeTabs', { screen: 'Shop' } as any)}
-            style={[styles.shopBtn, { backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 24 }]}>
-            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>
-              Explore Collection
-            </Text>
+            activeOpacity={0.88}
+            style={{ marginTop: 24 }}
+          >
+            <AppGradient style={[styles.shopBtn, { borderRadius: radius.xl }]}>
+              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>
+                Explore Collection
+              </Text>
+            </AppGradient>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -607,6 +611,43 @@ export function CartScreen({ navigation }: Props) {
 
             {(() => {
               const isCheckoutDisabled = isB2bUser && subtotal < B2B_MIN_ORDER;
+              if (isCheckoutDisabled) {
+                return (
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (!isAuthenticated) {
+                        navigation.getParent()?.navigate('Auth' as never);
+                        return;
+                      }
+                      show({
+                        type: 'warning',
+                        title: 'Minimum Order Required',
+                        message: `B2B orders require a minimum of ₹${B2B_MIN_ORDER.toLocaleString('en-IN')}.`,
+                      });
+                    }}
+                    disabled={true}
+                    style={[
+                      styles.checkoutBtn,
+                      {
+                        backgroundColor: isDark ? '#2A2242' : '#EDE8F5',
+                        borderRadius: radius.xl,
+                        marginTop: 16,
+                        borderWidth: 1,
+                        borderColor: isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(124, 58, 237, 0.15)',
+                      },
+                    ]}>
+                    <Text
+                      style={{
+                        color: isDark ? '#94A3B8' : '#6B5E82',
+                        fontFamily: fontFamily.sansBold,
+                        fontSize: fontSize.base,
+                      }}>
+                      Proceed to Checkout
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }
+
               return (
                 <TouchableOpacity
                   onPress={() => {
@@ -614,39 +655,31 @@ export function CartScreen({ navigation }: Props) {
                       navigation.getParent()?.navigate('Auth' as never);
                       return;
                     }
-                    if (isCheckoutDisabled) {
-                      show({
-                        type: 'warning',
-                        title: 'Minimum Order Required',
-                        message: `B2B orders require a minimum of ₹${B2B_MIN_ORDER.toLocaleString('en-IN')}.`,
-                      });
-                      return;
-                    }
                     navigation.navigate('Checkout');
                   }}
-                  activeOpacity={isCheckoutDisabled ? 0.8 : 0.85}
-                  style={[
-                    styles.checkoutBtn,
-                    {
-                      backgroundColor: isCheckoutDisabled
-                        ? (isDark ? '#2A2242' : '#EDE8F5')
-                        : colors.primary,
-                      borderRadius: radius.xl,
-                      marginTop: 16,
-                      borderWidth: isCheckoutDisabled ? 1 : 0,
-                      borderColor: isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(124, 58, 237, 0.15)',
-                    },
-                  ]}>
-                  <Text
-                    style={{
-                      color: isCheckoutDisabled
-                        ? (isDark ? '#94A3B8' : '#6B5E82')
-                        : '#FFFFFF',
-                      fontFamily: fontFamily.sansBold,
-                      fontSize: fontSize.base,
-                    }}>
-                    Proceed to Checkout
-                  </Text>
+                  activeOpacity={0.85}
+                  style={{ marginTop: 16 }}>
+                  <AppGradient
+                    style={[
+                      styles.checkoutBtn,
+                      {
+                        borderRadius: radius.xl,
+                        shadowColor: '#EC4899',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.35,
+                        shadowRadius: 8,
+                        elevation: 4,
+                      },
+                    ]}>
+                    <Text
+                      style={{
+                        color: '#FFFFFF',
+                        fontFamily: fontFamily.sansBold,
+                        fontSize: fontSize.base,
+                      }}>
+                      Proceed to Checkout
+                    </Text>
+                  </AppGradient>
                 </TouchableOpacity>
               );
             })()}

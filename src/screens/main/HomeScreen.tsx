@@ -34,7 +34,7 @@ import { fetchAddresses } from '../../services/address';
 import { getBannerImageUrl, getFirstImageUrl, prefetchProductImages } from '../../utils/imageUtils';
 import { trackAdModalSwipe } from '../../services/adModalTracker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppIcon, LocationSelectModal } from '../../components/common';
+import { AppIcon, AppGradient, LocationSelectModal } from '../../components/common';
 import { LOCATION_STORAGE_KEY } from '../../components/common/LocationSelectModal';
 import { useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -45,145 +45,6 @@ const BANNER_H = Math.round(W * 0.52);
 const CAT_SIZE = 72;
 const PROMO_ITEM_W = 240;
 
-const EDITORIAL_BANNERS = [
-  {
-    id: 'eb1',
-    tag: 'FASHION TRENDS',
-    badge: 'EARRINGS',
-    headline: 'Statement\nEarrings',
-    sub: 'Trending drops, hoops & stylish studs for everyday glam',
-    cta: 'Shop Earrings',
-    gradientTop: '#3B0764',
-    gradientBot: '#6B21A8',
-    accent: '#C084FC',
-    pill: '#EC4899',
-    image: require('../../../assets/images/Earrings.jpeg'),
-  },
-  {
-    id: 'eb2',
-    tag: 'DESIGNER PICKS',
-    badge: 'RINGS',
-    headline: 'Trendy &\nStack Rings',
-    sub: 'Chic fashion rings and layered bands to match your outfits',
-    cta: 'Explore Rings',
-    gradientTop: '#831843',
-    gradientBot: '#BE185D',
-    accent: '#F472B6',
-    pill: '#F59E0B',
-    image: require('../../../assets/images/Ring.jpeg'),
-  },
-  {
-    id: 'eb3',
-    tag: 'NEW ARRIVALS',
-    badge: 'BRACELETS',
-    headline: 'Charm &\nCuff Bracelets',
-    sub: 'Modern fashion bracelets and sleek everyday accessories',
-    cta: 'Shop Bracelets',
-    gradientTop: '#78350F',
-    gradientBot: '#B45309',
-    accent: '#FDE68A',
-    pill: '#D97706',
-    image: require('../../../assets/images/Bracelet.jpeg'),
-  },
-] as const;
-
-const CATEGORY_RING_COLORS = [
-  { border: '#7C3AED', shadow: '#7C3AED' }, // Royal Purple
-  { border: '#EC4899', shadow: '#EC4899' }, // Hot Rose Pink
-  { border: '#F59E0B', shadow: '#F59E0B' }, // 18K Amber Gold
-  { border: '#6366F1', shadow: '#6366F1' }, // Electric Violet
-  { border: '#E11D48', shadow: '#E11D48' }, // Ruby Rose
-  { border: '#06B6D4', shadow: '#06B6D4' }, // Cyan Jewel
-];
-
-function EditorialBannersSection({
-  banners,
-  goShop,
-  colors,
-  fontFamily,
-  spacing,
-  radius,
-  isDark,
-}: {
-  banners: typeof EDITORIAL_BANNERS;
-  goShop: (params?: any) => void;
-  colors: any;
-  fontFamily: any;
-  spacing: any;
-  radius: any;
-  isDark: boolean;
-}) {
-  return (
-    <View style={{ marginVertical: 14 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing[4], marginBottom: 12 }}>
-        <View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-            <AppIcon name="star-four-points" size={13} color="#EC4899" />
-            <Text style={{ color: '#EC4899', fontFamily: fontFamily.sansBold, fontSize: 10.5, letterSpacing: 2, textTransform: 'uppercase' }}>
-              EDITORIAL SHOWCASE
-            </Text>
-          </View>
-          <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 22, letterSpacing: -0.4 }}>
-            Signature Collections
-          </Text>
-        </View>
-      </View>
-
-      <FlatList
-        data={banners}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: spacing[4], gap: 14 }}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => goShop()}
-            activeOpacity={0.92}
-            style={{
-              width: W * 0.82,
-              height: 156,
-              borderRadius: 22,
-              backgroundColor: item.gradientTop,
-              flexDirection: 'row',
-              overflow: 'hidden',
-              shadowColor: item.accent,
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: 0.35,
-              shadowRadius: 10,
-              elevation: 5,
-              borderWidth: 1.2,
-              borderColor: 'rgba(255,255,255,0.15)',
-            }}
-          >
-            {/* Left Column with rich text & gradient CTA */}
-            <View style={{ flex: 1.15, padding: 16, justifyContent: 'space-between' }}>
-              <View>
-                <View style={{ backgroundColor: item.pill, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 6 }}>
-                  <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 1.2 }}>
-                    {item.tag}
-                  </Text>
-                </View>
-                <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 17, lineHeight: 21 }}>
-                  {item.headline}
-                </Text>
-              </View>
-
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, alignSelf: 'flex-start', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' }}>
-                <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 11 }}>{item.cta}</Text>
-                <AppIcon name="arrow-right" size={12} color="#FFFFFF" />
-              </View>
-            </View>
-
-            {/* Right Column Image */}
-            <View style={{ flex: 0.85, height: '100%' }}>
-              <Image source={item.image} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-    </View>
-  );
-}
 
 const VIBE_CHIPS = [
   { id: 'v1', label: 'Minimalist', icon: 'circle-outline', color: '#6C63FF' },
@@ -2148,13 +2009,42 @@ export function HomeScreen({ navigation }: Props) {
               activeOpacity={0.85}
               style={styles.avatarRingWrap}
             >
-              <View style={[styles.avatarRing, { borderColor: isDark ? '#A78BFA' : '#7C3AED', backgroundColor: isDark ? 'rgba(124,58,237,0.18)' : 'rgba(124,58,237,0.10)' }]}>
-                <View style={[styles.avatarInner, { backgroundColor: isDark ? '#1C1236' : '#F5EEFF' }]}>
-                  <Text style={[styles.avatarText, { color: isDark ? '#C4B5FD' : '#7C3AED', fontFamily: fontFamily.sansBold }]}>
+              <AppGradient
+                style={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: 25,
+                  padding: 2.5,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  shadowColor: '#EC4899',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: isDark ? 0.45 : 0.25,
+                  shadowRadius: 6,
+                  elevation: 4,
+                }}
+              >
+                <View
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: 23,
+                    backgroundColor: isDark ? '#1C1236' : '#FFFFFF',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: isDark ? '#E9D5FF' : '#7C3AED',
+                      fontFamily: fontFamily.sansBold,
+                      fontSize: 18,
+                    }}
+                  >
                     {firstName.charAt(0).toUpperCase()}
                   </Text>
                 </View>
-              </View>
+              </AppGradient>
               <View style={[styles.avatarVipBadge, { backgroundColor: '#EC4899' }]}>
                 <AppIcon name="star" size={7} color="#FFF" />
               </View>
@@ -2245,9 +2135,9 @@ export function HomeScreen({ navigation }: Props) {
               },
             ]}
           >
-            <View style={[styles.searchIconBadge, { backgroundColor: isDark ? '#7C3AED' : '#7C3AED' }]}>
+            <AppGradient style={styles.searchIconBadge}>
               <AppIcon name="magnify" size={16} color="#FFFFFF" />
-            </View>
+            </AppGradient>
             <TextInput
               value={search}
               onChangeText={setSearch}
@@ -2286,22 +2176,36 @@ export function HomeScreen({ navigation }: Props) {
                     activeOpacity={0.82}
                     style={{ alignItems: 'center', width: 76 }}
                   >
-                    {/* Story-style Ring matching Shop page */}
-                    <View
-                      style={[
-                        styles.categoryRingOuter,
-                        {
-                          borderColor: colors.primary,
-                          backgroundColor: colors.surfaceElevated,
-                          shadowColor: colors.primary,
-                          shadowOpacity: isDark ? 0.35 : 0.12,
-                        },
-                      ]}
+                    {/* Luxury Gradient Story Ring */}
+                    <AppGradient
+                      style={{
+                        width: 74,
+                        height: 74,
+                        borderRadius: 37,
+                        padding: 2.5,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        shadowColor: '#EC4899',
+                        shadowOffset: { width: 0, height: 3 },
+                        shadowOpacity: isDark ? 0.45 : 0.22,
+                        shadowRadius: 7,
+                        elevation: 4,
+                      }}
                     >
-                      <View style={[styles.categoryRingInner, { backgroundColor: colors.surface }]}>
+                      <View
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: 34.5,
+                          backgroundColor: colors.surface,
+                          overflow: 'hidden',
+                          borderWidth: 1.5,
+                          borderColor: isDark ? '#140E22' : '#FFFFFF',
+                        }}
+                      >
                         <Image source={catImg} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
                       </View>
-                    </View>
+                    </AppGradient>
                     <Text
                       style={[
                         styles.categoryLabelText,
@@ -2416,23 +2320,26 @@ export function HomeScreen({ navigation }: Props) {
                     </View>
                     <TouchableOpacity
                       onPress={() => goShop()}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 5,
-                        backgroundColor: '#4F46E5',
-                        paddingHorizontal: 14,
-                        paddingVertical: 8,
-                        borderRadius: 22,
-                        shadowColor: '#4F46E5',
-                        shadowOffset: { width: 0, height: 3 },
-                        shadowOpacity: 0.35,
-                        shadowRadius: 6,
-                        elevation: 4,
-                      }}
+                      activeOpacity={0.85}
                     >
-                      <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>Explore</Text>
-                      <AppIcon name="arrow-right" size={13} color="#FFFFFF" />
+                      <AppGradient
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 5,
+                          paddingHorizontal: 14,
+                          paddingVertical: 8,
+                          borderRadius: 22,
+                          shadowColor: '#EC4899',
+                          shadowOffset: { width: 0, height: 3 },
+                          shadowOpacity: 0.35,
+                          shadowRadius: 6,
+                          elevation: 4,
+                        }}
+                      >
+                        <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>Explore</Text>
+                        <AppIcon name="arrow-right" size={13} color="#FFFFFF" />
+                      </AppGradient>
                     </TouchableOpacity>
                   </View>
                   <FlatList
@@ -2547,16 +2454,6 @@ export function HomeScreen({ navigation }: Props) {
               </View>
             )}
 
-            {/* ── Editorial Showcase Banners (Signature Collections) ── */}
-            <EditorialBannersSection
-              banners={EDITORIAL_BANNERS}
-              goShop={goShop}
-              colors={colors}
-              fontFamily={fontFamily}
-              spacing={spacing}
-              radius={radius}
-              isDark={isDark}
-            />
 
             {/* Divider before interleaved feed */}
             <View style={{ height: 12 }} />
@@ -2758,23 +2655,25 @@ export function HomeScreen({ navigation }: Props) {
         <TouchableOpacity
           activeOpacity={0.88}
           onPress={() => setAdVisible(true)}
-          style={{
-            backgroundColor: colors.primary,
-            width: 52,
-            height: 52,
-            borderRadius: 26,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.35,
-            shadowRadius: 8,
-            elevation: 8,
-            borderWidth: 1.5,
-            borderColor: 'rgba(255,255,255,0.25)',
-          }}
         >
-          <AppIcon name="heart" size={24} color="#FFF" />
+          <AppGradient
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 26,
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#EC4899',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.45,
+              shadowRadius: 8,
+              elevation: 8,
+              borderWidth: 1.5,
+              borderColor: 'rgba(255,255,255,0.4)',
+            }}
+          >
+            <AppIcon name="heart" size={24} color="#FFF" />
+          </AppGradient>
         </TouchableOpacity>
       </View>
 

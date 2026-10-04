@@ -10,8 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { PageHeader, Screen } from '../../components/common';
-import { AppIcon } from '../../components/common';
+import { AppIcon, AppGradient, PageHeader, Screen } from '../../components/common';
 import { ProductCard } from '../../components/ProductCard';
 import { useTheme } from '../../context/ThemeContext';
 import { fetchCategories, fetchProducts } from '../../services/products';
@@ -69,32 +68,75 @@ const CategoryItem = React.memo(({ item, index, isSelected, onSelect, colors, fo
       style={{ alignItems: 'center', width: 78 }}
     >
       {/* Professional Outer Accent Ring matching Home Page */}
-      <View
-        style={{
-          width: 74,
-          height: 74,
-          borderRadius: 37,
-          padding: 3,
-          borderWidth: isSelected ? 2.2 : 1.8,
-          borderColor: colors.primary,
-          backgroundColor: isSelected ? colors.primary + '18' : colors.surfaceElevated,
-          shadowColor: '#6B5040',
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: isDark ? 0.35 : 0.12,
-          shadowRadius: 5,
-          elevation: 3,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <View style={{ width: '100%', height: '100%', borderRadius: 33, overflow: 'hidden', backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}>
-          {isAll ? (
-            <AppIcon name="grid-large" size={26} color={isSelected ? colors.primary : colors.textMuted} />
-          ) : (
-            <Image source={catImg!} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-          )}
+      {isSelected ? (
+        <AppGradient
+          style={{
+            width: 74,
+            height: 74,
+            borderRadius: 37,
+            padding: 2.5,
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#EC4899',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: isDark ? 0.45 : 0.22,
+            shadowRadius: 7,
+            elevation: 4,
+          }}
+        >
+          <View
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: 34.5,
+              backgroundColor: colors.surface,
+              overflow: 'hidden',
+              borderWidth: 1.5,
+              borderColor: isDark ? '#140E22' : '#FFFFFF',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {isAll ? (
+              <AppIcon name="grid-large" size={26} color={colors.primary} />
+            ) : (
+              <Image source={catImg!} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            )}
+          </View>
+        </AppGradient>
+      ) : (
+        <View
+          style={{
+            width: 74,
+            height: 74,
+            borderRadius: 37,
+            padding: 2.5,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1.5,
+            borderColor: isDark ? '#2A2242' : '#E9E3F3',
+            backgroundColor: colors.surfaceElevated,
+          }}
+        >
+          <View
+            style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: 34.5,
+              backgroundColor: colors.surface,
+              overflow: 'hidden',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {isAll ? (
+              <AppIcon name="grid-large" size={26} color={colors.textMuted} />
+            ) : (
+              <Image source={catImg!} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+            )}
+          </View>
         </View>
-      </View>
+      )}
       <Text
         style={{
           color: isSelected ? colors.primary : colors.textPrimary,

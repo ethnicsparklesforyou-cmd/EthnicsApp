@@ -14,7 +14,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { AppIcon, PageHeader, Screen, useAppModal } from '../../components/common';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { AppIcon, AppGradient, PageHeader, Screen, useAppModal } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -65,6 +66,7 @@ const getAddrTypeLabel = (addr: any) => {
 };
 
 export function CheckoutScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const { theme, isDark } = useTheme();
   const { colors, fontFamily, fontSize, spacing, radius } = theme;
   const { items, updateQty, removeItem, clearCart } = useCart();
@@ -759,10 +761,10 @@ export function CheckoutScreen({ navigation }: Props) {
         <PageHeader title="Checkout" onBack={() => navigation.goBack()} />
         <View style={styles.center}>
           <AppIcon name="lock-outline" size={48} color={colors.textMuted} />
-          <Text style={[styles.authRequiredTitle, { color: colors.textPrimary, fontFamily: fontFamily.sansBold }]}>Please Sign In</Text>
-          <Text style={[styles.authRequiredSub, { color: colors.textMuted, fontFamily: fontFamily.sans }]}>Sign in or register to complete your order.</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login' as any)} activeOpacity={0.85} style={[styles.signInBtn, { backgroundColor: colors.primary }]}>
-            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login' as any)} activeOpacity={0.88} style={{ marginTop: 18, borderRadius: radius.xl, overflow: 'hidden' }}>
+            <AppGradient style={styles.signInBtn}>
+              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+            </AppGradient>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -835,17 +837,26 @@ export function CheckoutScreen({ navigation }: Props) {
                   }
                 ]}
               />
-              <TouchableOpacity
-                onPress={handleSaveProfileName}
-                disabled={savingName || !profileName.trim()}
-                activeOpacity={0.85}
-                style={[
-                  styles.nameSaveBtn,
-                  { backgroundColor: profileName.trim() ? colors.primary : colors.border }
-                ]}
-              >
-                {savingName ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.nameSaveBtnText}>Save</Text>}
-              </TouchableOpacity>
+              {profileName.trim() ? (
+                <TouchableOpacity
+                  onPress={handleSaveProfileName}
+                  disabled={savingName}
+                  activeOpacity={0.85}
+                >
+                  <AppGradient style={styles.nameSaveBtn}>
+                    {savingName ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.nameSaveBtnText}>Save</Text>}
+                  </AppGradient>
+                </TouchableOpacity>
+              ) : (
+                <View
+                  style={[
+                    styles.nameSaveBtn,
+                    { backgroundColor: colors.border }
+                  ]}
+                >
+                  <Text style={styles.nameSaveBtnText}>Save</Text>
+                </View>
+              )}
             </View>
             {nameSavedSuccess ? (
               <Text style={styles.nameSavedSuccessText}>✓ Recipient name saved successfully!</Text>
@@ -1232,39 +1243,54 @@ export function CheckoutScreen({ navigation }: Props) {
                   autoCapitalize="characters"
                   style={[styles.couponNativeInput, { backgroundColor: colors.surfaceElevated, borderColor: colors.border, color: colors.textPrimary, fontFamily: fontFamily.sansBold }]}
                 />
-                <TouchableOpacity
-                  onPress={() => handleApplyCouponCode(couponInput)}
-                  disabled={applyingCoupon || !couponInput.trim()}
-                  activeOpacity={0.85}
-                  style={[
-                    styles.couponApplyButton,
-                    {
-                      backgroundColor: couponInput.trim()
-                        ? colors.primary
-                        : (isDark ? '#2A2242' : '#EDE8F5'),
-                      borderWidth: couponInput.trim() ? 0 : 1,
-                      borderColor: isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(124, 58, 237, 0.15)',
-                    },
-                  ]}
-                >
-                  {applyingCoupon ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
+                {couponInput.trim() ? (
+                  <TouchableOpacity
+                    onPress={() => handleApplyCouponCode(couponInput)}
+                    disabled={applyingCoupon}
+                    activeOpacity={0.85}
+                  >
+                    <AppGradient style={styles.couponApplyButton}>
+                      {applyingCoupon ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.couponApplyButtonText,
+                            {
+                              color: '#FFFFFF',
+                              fontFamily: fontFamily.sansBold,
+                            },
+                          ]}
+                        >
+                          Apply
+                        </Text>
+                      )}
+                    </AppGradient>
+                  </TouchableOpacity>
+                ) : (
+                  <View
+                    style={[
+                      styles.couponApplyButton,
+                      {
+                        backgroundColor: isDark ? '#2A2242' : '#EDE8F5',
+                        borderWidth: 1,
+                        borderColor: isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(124, 58, 237, 0.15)',
+                      },
+                    ]}
+                  >
                     <Text
                       style={[
                         styles.couponApplyButtonText,
                         {
-                          color: couponInput.trim()
-                            ? '#FFFFFF'
-                            : (isDark ? '#94A3B8' : '#6B5E82'),
+                          color: isDark ? '#94A3B8' : '#6B5E82',
                           fontFamily: fontFamily.sansBold,
                         },
                       ]}
                     >
                       Apply
                     </Text>
-                  )}
-                </TouchableOpacity>
+                  </View>
+                )}
               </View>
 
               {/* Available Coupons Dropdown / List */}
@@ -1477,7 +1503,16 @@ export function CheckoutScreen({ navigation }: Props) {
       </ScrollView>
 
       {/* ── Native Sticky Bottom Action Bar ── */}
-      <View style={[styles.bottomBar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
+            paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 14),
+          }
+        ]}
+      >
         <View style={styles.bottomPriceCol}>
           <Text style={[styles.bottomTotalLabel, { color: colors.textMuted, fontFamily: fontFamily.sansBold }]}>TOTAL PAYABLE</Text>
           <Text style={[styles.bottomTotalPrice, { color: colors.textPrimary, fontFamily: fontFamily.sansBold }]}>
@@ -1485,43 +1520,74 @@ export function CheckoutScreen({ navigation }: Props) {
           </Text>
         </View>
 
-        <TouchableOpacity
-          onPress={handlePlaceOrder}
-          disabled={placing || processingCodCharge}
-          activeOpacity={isB2bBelowMinOrder ? 0.8 : 0.88}
-          style={[
-            styles.bottomCtaBtn,
-            {
-              backgroundColor: isB2bBelowMinOrder
-                ? (isDark ? '#2A2242' : '#EDE8F5')
-                : colors.primary,
-              borderWidth: isB2bBelowMinOrder ? 1 : 0,
-              borderColor: isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(124, 58, 237, 0.15)',
-            }
-          ]}
-        >
-          {placing || processingCodCharge ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text
+        {isB2bBelowMinOrder ? (
+          <TouchableOpacity
+            onPress={handlePlaceOrder}
+            disabled={true}
+            style={{ flex: 1 }}
+          >
+            <View
               style={[
-                styles.bottomCtaBtnText,
+                styles.bottomCtaBtn,
                 {
-                  color: isB2bBelowMinOrder
-                    ? (isDark ? '#94A3B8' : '#6B5E82')
-                    : '#FFFFFF',
-                  fontFamily: fontFamily.sansBold,
+                  backgroundColor: isDark ? '#2A2242' : '#EDE8F5',
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(168, 85, 247, 0.25)' : 'rgba(124, 58, 237, 0.15)',
                 }
               ]}
             >
-              {isB2bBelowMinOrder
-                ? `Min ₹3,000 Required`
-                : paymentMethod === 'cod'
-                  ? 'Confirm COD Order'
-                  : 'Proceed to Pay'}
-            </Text>
-          )}
-        </TouchableOpacity>
+              <Text
+                style={[
+                  styles.bottomCtaBtnText,
+                  {
+                    color: isDark ? '#94A3B8' : '#6B5E82',
+                    fontFamily: fontFamily.sansBold,
+                  }
+                ]}
+              >
+                Min ₹3,000 Required
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={handlePlaceOrder}
+            disabled={placing || processingCodCharge}
+            activeOpacity={0.88}
+            style={{ flex: 1 }}
+          >
+            <AppGradient
+              style={[
+                styles.bottomCtaBtn,
+                {
+                  shadowColor: '#EC4899',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }
+              ]}
+            >
+              {placing || processingCodCharge ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text
+                  style={[
+                    styles.bottomCtaBtnText,
+                    {
+                      color: '#FFFFFF',
+                      fontFamily: fontFamily.sansBold,
+                    }
+                  ]}
+                >
+                  {paymentMethod === 'cod'
+                    ? 'Confirm COD Order'
+                    : 'Proceed to Pay'}
+                </Text>
+              )}
+            </AppGradient>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* ── Modal: Select Saved Delivery Address ── */}
@@ -1777,14 +1843,16 @@ export function CheckoutScreen({ navigation }: Props) {
               <TouchableOpacity
                 onPress={handleSaveAddress}
                 disabled={savingAddress}
-                activeOpacity={0.85}
-                style={[styles.saveAddressBtn, { backgroundColor: colors.primary, marginTop: 12 }]}
+                activeOpacity={0.88}
+                style={{ marginTop: 12, borderRadius: 12, overflow: 'hidden' }}
               >
-                {savingAddress ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={[styles.saveAddressBtnText, { fontFamily: fontFamily.sansBold }]}>Save Address & Deliver Here</Text>
-                )}
+                <AppGradient style={styles.saveAddressBtn}>
+                  {savingAddress ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={[styles.saveAddressBtnText, { fontFamily: fontFamily.sansBold }]}>Save Address & Deliver Here</Text>
+                  )}
+                </AppGradient>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -2417,7 +2485,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 26 : 14,
     borderTopWidth: 1,
     gap: 14,
     shadowColor: '#000',
@@ -2438,9 +2505,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   bottomCtaBtn: {
-    flex: 1,
+    width: '100%',
     height: 48,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',

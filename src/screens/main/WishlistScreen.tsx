@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { PageHeader, Screen } from '../../components/common';
-import { AppIcon } from '../../components/common';
+import { AppIcon, AppGradient, PageHeader, Screen } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { fetchProducts } from '../../services/products';
@@ -84,9 +83,12 @@ export function WishlistScreen({ navigation }: Props) {
           </Text>
           <TouchableOpacity
             onPress={() => navigation.navigate('HomeTabs', { screen: 'Shop' } as any)}
-            style={[styles.shopBtn, { backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 28 }]}
+            activeOpacity={0.88}
+            style={{ marginTop: 28 }}
           >
-            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Explore Collection</Text>
+            <AppGradient style={[styles.shopBtn, { borderRadius: radius.xl }]}>
+              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Explore Collection</Text>
+            </AppGradient>
           </TouchableOpacity>
         </View>
       ) : (

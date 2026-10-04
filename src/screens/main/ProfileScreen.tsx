@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { AppIcon, ConfirmModal, PageHeader, Screen, useAppModal } from '../../components/common';
+import { AppIcon, AppGradient, ConfirmModal, PageHeader, Screen, useAppModal } from '../../components/common';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { useTheme } from '../../context/ThemeContext';
@@ -41,9 +41,12 @@ export function ProfileScreen({ navigation }: Props) {
           </Text>
           <TouchableOpacity
             onPress={() => navigation.getParent()?.navigate('Auth' as never)}
-            style={[styles.guestBtn, { backgroundColor: colors.primary, borderRadius: radius.xl, marginTop: 24 }]}
+            activeOpacity={0.88}
+            style={{ marginTop: 24 }}
           >
-            <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+            <AppGradient style={[styles.guestBtn, { borderRadius: radius.xl }]}>
+              <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Sign In / Register</Text>
+            </AppGradient>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -113,11 +116,11 @@ export function ProfileScreen({ navigation }: Props) {
 
         {/* Avatar Hero */}
         <View style={[styles.avatarCard, { backgroundColor: colors.surface, borderColor: colors.border, marginHorizontal: spacing[4], borderRadius: radius.xl, marginTop: 8 }]}>
-          <View style={[styles.avatarCircle, { backgroundColor: colors.primary }]}>
+          <AppGradient style={[styles.avatarCircle, { borderRadius: 40 }]}>
             <Text style={{ color: '#fff', fontFamily: fontFamily.sansBold, fontSize: 32 }}>
               {getInitials(user.name || 'U')}
             </Text>
-          </View>
+          </AppGradient>
           <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.xl, marginTop: 14 }}>
             {user.name}
           </Text>

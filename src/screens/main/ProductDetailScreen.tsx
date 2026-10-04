@@ -15,7 +15,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppIcon, Screen, useAppModal } from '../../components/common';
+import { AppIcon, AppGradient, Screen, useAppModal } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -770,24 +770,27 @@ export function ProductDetailScreen({ navigation, route }: Props) {
               onPress={handleBuyNow}
               disabled={outOfStock || isMaxInCart || (product.size?.length > 0 && !selectedSize)}
               activeOpacity={0.85}
-              style={[
-                styles.buyNowBtn,
-                {
-                  backgroundColor: (outOfStock || isMaxInCart) ? colors.border : colors.primary,
-                  borderRadius: radius.lg,
-                  opacity: (outOfStock || isMaxInCart) ? 0.6 : 1,
-                  shadowColor: colors.primary,
-                  shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: 0.35,
-                  shadowRadius: 6,
-                  elevation: 3,
-                }
-              ]}
+              style={{ flex: 1 }}
             >
-              <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 13.5 }}>
-                {currentInCart > 0 ? 'Checkout' : 'Buy Now'}
-              </Text>
-              <AppIcon name="chevron-right" size={16} color="#FFFFFF" />
+              <AppGradient
+                style={[
+                  styles.buyNowBtn,
+                  {
+                    borderRadius: radius.lg,
+                    opacity: (outOfStock || isMaxInCart) ? 0.6 : 1,
+                    shadowColor: '#EC4899',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 0.35,
+                    shadowRadius: 6,
+                    elevation: 3,
+                  }
+                ]}
+              >
+                <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 13.5 }}>
+                  {currentInCart > 0 ? 'Checkout' : 'Buy Now'}
+                </Text>
+                <AppIcon name="chevron-right" size={16} color="#FFFFFF" />
+              </AppGradient>
             </TouchableOpacity>
           </View>
         </View>

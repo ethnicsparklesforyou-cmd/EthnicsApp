@@ -10,6 +10,9 @@ import {
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 
+import { PURPLE_PINK_GRADIENT } from './AppGradient';
+import { Image } from 'react-native';
+
 type Variant = 'primary' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
@@ -48,17 +51,65 @@ export function Button({
 
   const s = sizeMap[size];
 
-  const variantStyles: Record<Variant, ViewStyle> = {
-    primary: {
-      backgroundColor: isDisabled ? colors.primaryLight : colors.primary,
-      borderWidth: 1.5,
-      borderColor: colors.primary,
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: isDisabled ? 0 : 0.18,
-      shadowRadius: 10,
-      elevation: isDisabled ? 0 : 3,
-    },
+  if (variant === 'primary') {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={isDisabled}
+        activeOpacity={0.82}
+        style={[
+          styles.base,
+          {
+            height: s.height,
+            borderRadius: radius.lg,
+            opacity: isDisabled ? 0.6 : 1,
+            alignSelf: fullWidth ? 'stretch' : 'flex-start',
+            overflow: 'hidden',
+            position: 'relative',
+            shadowColor: '#EC4899',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isDisabled ? 0 : 0.28,
+            shadowRadius: 10,
+            elevation: isDisabled ? 0 : 4,
+          },
+          style,
+        ]}
+      >
+        <Image
+          source={{ uri: PURPLE_PINK_GRADIENT }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="stretch"
+        />
+        {loading ? (
+          <ActivityIndicator
+            color={colors.textOnPrimary}
+            size="small"
+          />
+        ) : (
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={{
+              fontFamily: fontFamily.sansMedium,
+              fontSize: s.fs,
+              fontWeight: fontWeight.semibold,
+              color: colors.textOnPrimary,
+              letterSpacing: letterSpacing.wider,
+              textTransform: 'uppercase',
+              textAlign: 'center',
+              includeFontPadding: false,
+              lineHeight: s.fs + 4,
+              flexShrink: 1,
+              paddingHorizontal: s.px,
+            }}>
+            {label}
+          </Text>
+        )}
+      </TouchableOpacity>
+    );
+  }
+
+  const variantStyles: Record<Exclude<Variant, 'primary'>, ViewStyle> = {
     outline: {
       backgroundColor: colors.surface,
       borderWidth: 1.5,
@@ -77,8 +128,7 @@ export function Button({
     },
   };
 
-  const textColor: Record<Variant, string> = {
-    primary: colors.textOnPrimary,
+  const textColor: Record<Exclude<Variant, 'primary'>, string> = {
     outline: colors.primary,
     ghost: colors.primary,
     danger: '#fff',
@@ -103,7 +153,7 @@ export function Button({
       ]}>
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? colors.textOnPrimary : colors.primary}
+          color={colors.primary}
           size="small"
         />
       ) : (
