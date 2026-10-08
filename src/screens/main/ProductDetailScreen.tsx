@@ -5,6 +5,7 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Modal,
   Platform,
   ScrollView,
   StatusBar,
@@ -28,7 +29,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { MainStackParamList } from '../../navigation/types';
 
-const { width: W } = Dimensions.get('window');
+const { width: W, height: H } = Dimensions.get('window');
 const HERO_H = Math.round(W * 1.08);
 
 type Props = {
@@ -54,7 +55,10 @@ export function ProductDetailScreen({ navigation, route }: Props) {
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [related, setRelated] = useState<any[]>([]);
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
   const galleryListRef = useRef<FlatList>(null);
+  const viewerListRef = useRef<FlatList>(null);
 
   const cartItem = useMemo(() => cartItems.find(i => String(i.productId) === String(productId)), [cartItems, productId]);
   const wishlisted = isWishlisted(productId);
@@ -310,14 +314,25 @@ export function ProductDetailScreen({ navigation, route }: Props) {
                 const idx = Math.round(e.nativeEvent.contentOffset.x / W);
                 setSelectedImage(idx);
               }}
-              renderItem={({ item }) => (
-                <View style={{ width: W, height: HERO_H }}>
+              renderItem={({ item, index }) => (
+                <TouchableOpacity
+                  activeOpacity={0.92}
+                  onPress={() => {
+                    setViewerIndex(index);
+                    setViewerVisible(true);
+                  }}
+                  style={{ width: W, height: HERO_H }}
+                >
                   <Image
                     source={{ uri: item }}
                     style={{ width: '100%', height: '100%' }}
                     resizeMode="cover"
                   />
-                </View>
+                  <View style={[styles.tapToZoomBadge, { backgroundColor: 'rgba(0, 0, 0, 0.55)' }]}>
+                    <AppIcon name="arrow-expand-all" color="#FFFFFF" size={13} />
+                    <Text style={styles.tapToZoomText}>Tap to zoom</Text>
+                  </View>
+                </TouchableOpacity>
               )}
             />
           ) : (
@@ -795,6 +810,114 @@ export function ProductDetailScreen({ navigation, route }: Props) {
           </View>
         </View>
       )}
+
+      {/* ── Fullscreen Interactive Lightbox / Image Viewer ── */}
+      <Modal
+        visible={viewerVisible}
+        transparent={true}
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setViewerVisible(false)}
+      >
+        <View style={styles.viewerContainer}>
+          <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+          {/* Top Bar Header */}
+          <View style={[styles.viewerHeader, { paddingTop: topOffset + 6 }]}>
+            <TouchableOpacity
+              onPress={() => setViewerVisible(false)}
+              hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+              activeOpacity={0.8}
+              style={styles.viewerCloseBtn}
+            >
+              <AppIcon name="close" color="#FFFFFF" size={22} />
+            </TouchableOpacity>
+
+            <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 12 }}>
+              <Text style={styles.viewerTitle} numberOfLines={1}>
+                {product?.name || 'Product Image'}
+              </Text>
+              {images.length > 1 && (
+                <View style={styles.viewerCounterBadge}>
+                  <Text style={styles.viewerCounter}>
+                    {viewerIndex + 1} / {images.length}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.viewerZoomHintBadge}>
+              <AppIcon name="magnify-plus-outline" color="#FFFFFF" size={18} />
+            </View>
+          </View>
+
+          {/* Fullscreen Swipable / Zoomable Images */}
+          <View style={{ flex: 1, width: W }}>
+            <FlatList
+              ref={viewerListRef}
+              data={images}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              initialScrollIndex={viewerIndex}
+              getItemLayout={(_, index) => ({ length: W, offset: W * index, index })}
+              keyExtractor={(_, i) => `fs-img-${i}`}
+              style={{ flex: 1 }}
+              onMomentumScrollEnd={(e) => {
+                const idx = Math.round(e.nativeEvent.contentOffset.x / W);
+                setViewerIndex(idx);
+              }}
+              renderItem={({ item }) => (
+                <ScrollView
+                  maximumZoomScale={4}
+                  minimumZoomScale={1}
+                  bouncesZoom={true}
+                  centerContent={true}
+                  showsHorizontalScrollIndicator={false}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{
+                    width: W,
+                    flexGrow: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                  style={{ width: W, flex: 1 }}
+                >
+                  <Image
+                    source={{ uri: item }}
+                    style={{ width: W, height: '100%' }}
+                    resizeMode="contain"
+                  />
+                </ScrollView>
+              )}
+            />
+          </View>
+
+          {/* Bottom Thumbnails Strip in Viewer */}
+          {images.length > 1 && (
+            <View style={[styles.viewerThumbStrip, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 20 }}>
+                {images.map((img, idx) => (
+                  <TouchableOpacity
+                    key={`fs-thumb-${idx}`}
+                    onPress={() => {
+                      setViewerIndex(idx);
+                      viewerListRef.current?.scrollToIndex({ index: idx, animated: true });
+                    }}
+                    activeOpacity={0.8}
+                    style={[
+                      styles.viewerThumbWrap,
+                      viewerIndex === idx && styles.viewerThumbActive
+                    ]}
+                  >
+                    <Image source={{ uri: img }} style={styles.viewerThumbImg} resizeMode="contain" />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -802,6 +925,18 @@ export function ProductDetailScreen({ navigation, route }: Props) {
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   heroContainer: { width: W, position: 'relative', overflow: 'hidden' },
+  tapToZoomBadge: {
+    position: 'absolute',
+    bottom: 12,
+    left: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  tapToZoomText: { color: '#FFFFFF', fontSize: 11, fontWeight: '600' },
   inCartBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -990,5 +1125,79 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
   },
+  viewerContainer: {
+    flex: 1,
+    backgroundColor: '#0A0A0E',
+  },
+  viewerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    zIndex: 50,
+    backgroundColor: 'rgba(10, 10, 14, 0.95)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  viewerCloseBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewerZoomHintBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewerTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  viewerCounterBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginTop: 3,
+  },
+  viewerCounter: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  viewerThumbStrip: {
+    paddingTop: 12,
+    backgroundColor: 'rgba(10, 10, 14, 0.95)',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255, 255, 255, 0.12)',
+    zIndex: 50,
+  },
+  viewerThumbWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    backgroundColor: '#16151E',
+  },
+  viewerThumbActive: {
+    borderColor: '#EC4899',
+    borderWidth: 2,
+  },
+  viewerThumbImg: {
+    width: '100%',
+    height: '100%',
+  },
 });
+
 

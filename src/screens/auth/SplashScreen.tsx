@@ -122,8 +122,8 @@ export function SplashScreen({ onFinish }: Props) {
             },
           ]}
         >
-          <Text style={styles.brandName}>ETHNIC RETAIL</Text>
-          <Text style={styles.tagline}>Premium Fashion Jewellery</Text>
+          <Text style={styles.brandName}>ETHNIC SPARKLES</Text>
+          <Text style={styles.tagline}>Luxury Fashion Jewellery</Text>
         </Animated.View>
       </View>
 
@@ -205,8 +205,9 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   logo: {
-    width: 140,
-    height: 93,
+    width: 170,
+    height: 170,
+    borderRadius: 85,
   },
   textBlock: {
     alignItems: 'center',

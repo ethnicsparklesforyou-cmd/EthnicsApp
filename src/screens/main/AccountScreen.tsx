@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AppIcon, AppGradient, ConfirmModal, PageHeader, Screen, useAppModal } from '../../components/common';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -19,6 +19,9 @@ const MENU = [
   { icon: 'account-edit-outline', label: 'Edit Profile', sub: 'Update your personal info', route: 'Profile' },
 ];
 
+const SUPPORT_PHONE = '916356701295';
+const SUPPORT_PHONE_FORMATTED = '+91 6356 701 295';
+
 export function AccountScreen({ navigation }: Props) {
   const { theme } = useTheme();
   const { colors, fontFamily, fontSize, spacing, radius } = theme;
@@ -33,6 +36,23 @@ export function AccountScreen({ navigation }: Props) {
   const name = user?.name?.trim() || 'Guest User';
   const phone = user?.phone || '';
   const roleLabel = user?.userRole === 2 ? 'Business Account' : 'Retail Account';
+
+  const handleWhatsAppSupport = async () => {
+    const message = encodeURIComponent('Hello Ethnic Sparkles, I need help with my account/orders.');
+    const whatsappUrl = `whatsapp://send?phone=${SUPPORT_PHONE}&text=${message}`;
+    const webUrl = `https://wa.me/${SUPPORT_PHONE}?text=${message}`;
+
+    try {
+      const supported = await Linking.canOpenURL(whatsappUrl);
+      if (supported) {
+        await Linking.openURL(whatsappUrl);
+      } else {
+        await Linking.openURL(webUrl);
+      }
+    } catch {
+      await Linking.openURL(webUrl);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     if (!user?.id) return;
@@ -73,6 +93,18 @@ export function AccountScreen({ navigation }: Props) {
                 Sign In / Register
               </Text>
             </AppGradient>
+          </TouchableOpacity>
+
+          {/* Quick Help button for guests */}
+          <TouchableOpacity
+            onPress={handleWhatsAppSupport}
+            activeOpacity={0.8}
+            style={[styles.guestSupportBtn, { borderColor: colors.border, borderRadius: radius.lg, marginTop: 16 }]}
+          >
+            <AppIcon name="whatsapp" color="#25D366" size={20} />
+            <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansMedium, fontSize: fontSize.sm }}>
+              Need Help? Chat on WhatsApp
+            </Text>
           </TouchableOpacity>
         </View>
       </Screen>
@@ -150,6 +182,31 @@ export function AccountScreen({ navigation }: Props) {
           ))}
         </View>
 
+        {/* ── Help & Support Section (WhatsApp) ── */}
+        <View style={[styles.section, { marginHorizontal: spacing[4], marginTop: spacing[4], backgroundColor: colors.surfaceElevated, borderColor: colors.border + '60', borderRadius: radius.xl, borderWidth: 1 }]}>
+          <TouchableOpacity
+            onPress={handleWhatsAppSupport}
+            activeOpacity={0.7}
+            style={styles.menuRow}
+          >
+            <View style={[styles.menuIcon, { backgroundColor: '#25D36618', borderRadius: radius.lg }]}>
+              <AppIcon name="whatsapp" color="#25D366" size={22} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: fontSize.base }}>Help & Support</Text>
+                <View style={{ backgroundColor: '#25D36622', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                  <Text style={{ color: '#25D366', fontFamily: fontFamily.sansBold, fontSize: 10 }}>WhatsApp</Text>
+                </View>
+              </View>
+              <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs, marginTop: 2 }}>
+                Chat with us on {SUPPORT_PHONE_FORMATTED}
+              </Text>
+            </View>
+            <AppIcon name="chevron-right" color={colors.textMuted} size={18} />
+          </TouchableOpacity>
+        </View>
+
         {/* ── Account Management / Actions Section ── */}
         <View style={[styles.section, { marginHorizontal: spacing[4], marginTop: spacing[4], backgroundColor: colors.surfaceElevated, borderColor: colors.border + '60', borderRadius: radius.xl, borderWidth: 1 }]}>
           {/* Sign Out Row */}
@@ -224,6 +281,7 @@ const styles = StyleSheet.create({
   guestHero: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
   guestEmoji: { width: 100, height: 100, alignItems: 'center', justifyContent: 'center' },
   signInBtn: { paddingVertical: 15, paddingHorizontal: 40, alignItems: 'center', width: '100%' },
+  guestSupportBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13, paddingHorizontal: 20, width: '100%', borderWidth: 1 },
   promoRow: { flexDirection: 'row', width: '100%' },
   promoItem: { flex: 1, alignItems: 'center', gap: 2 },
 

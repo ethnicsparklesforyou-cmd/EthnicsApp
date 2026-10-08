@@ -4,10 +4,10 @@ import { Image, StyleSheet, View } from 'react-native';
 const logoImg = require('../../assets/LogoNew.png');
 
 const sizeMap = {
-  xs: { width: 90, height: 60 },
-  sm: { width: 120, height: 80 },
-  md: { width: 150, height: 100 },
-  lg: { width: 180, height: 120 },
+  xs: { width: 44, height: 44 },
+  sm: { width: 64, height: 64 },
+  md: { width: 90, height: 90 },
+  lg: { width: 130, height: 130 },
 };
 
 interface LogoProps {
