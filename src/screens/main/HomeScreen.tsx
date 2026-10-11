@@ -30,6 +30,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { fetchActiveBanners, fetchCategories, fetchProducts } from '../../services/products';
 import { fetchAllHomeSections } from '../../services/homeSections';
+import { fetchActivePromoTicker, PromoTickerItem, DEFAULT_RETAIL_PROMO_ITEMS } from '../../services/promoTicker';
 import { fetchAddresses } from '../../services/address';
 import { getBannerImageUrl, getFirstImageUrl, prefetchProductImages } from '../../utils/imageUtils';
 import { trackAdModalSwipe } from '../../services/adModalTracker';
@@ -43,7 +44,6 @@ import type { TabParamList } from '../../navigation/types';
 const { width: W } = Dimensions.get('window');
 const BANNER_H = Math.round(W * 0.52);
 const CAT_SIZE = 72;
-const PROMO_ITEM_W = 240;
 
 
 const VIBE_CHIPS = [
@@ -109,42 +109,119 @@ function getGreeting() {
   return 'Good Evening,';
 }
 
-function PromoMarquee({ fontFamily, isDark }: { fontFamily: any; isDark: boolean }) {
+function PromoMarquee({
+  fontFamily,
+  isDark,
+  items = DEFAULT_RETAIL_PROMO_ITEMS,
+}: {
+  fontFamily: any;
+  isDark: boolean;
+  items?: PromoTickerItem[];
+}) {
+  const displayItems = useMemo(() => {
+    return items && items.length > 0 ? items : DEFAULT_RETAIL_PROMO_ITEMS;
+  }, [items]);
+
   const translateX = useRef(new Animated.Value(0)).current;
 
+  // Initial estimate based on text lengths so animation starts without blank delays
+  const initialEstimate = useMemo(() => {
+    return displayItems.reduce((acc, it) => {
+      const len = (it.title?.length || 0) + (it.subtitle?.length || 0);
+      return acc + Math.max(180, len * 9 + 64);
+    }, 0);
+  }, [displayItems]);
+
+  const [contentWidth, setContentWidth] = useState(initialEstimate);
+
   useEffect(() => {
-    const distance = PROMO_ITEM_W * PROMO_ITEMS.length;
+    if (contentWidth <= 0) return;
+
     translateX.setValue(0);
+    // Smooth reading marquee speed: ~38 to 42 px/sec
+    const speed = 40;
+    const duration = Math.max(6000, (contentWidth / speed) * 1000);
+
     const animation = Animated.loop(
       Animated.timing(translateX, {
-        toValue: -distance,
-        duration: 18000,
+        toValue: -contentWidth,
+        duration: duration,
         easing: Easing.linear,
         useNativeDriver: true,
       }),
     );
     animation.start();
     return () => animation.stop();
-  }, [translateX]);
+  }, [translateX, contentWidth, displayItems]);
 
-  const repeatedItems = [...PROMO_ITEMS, ...PROMO_ITEMS];
+  const renderMarqueeItem = (item: PromoTickerItem, keyPrefix: string) => {
+    const subtitle = item.subtitle ? item.subtitle.trim() : '';
+    const formattedSubtitle = subtitle ? (subtitle.startsWith('·') ? subtitle : `· ${subtitle}`) : '';
+
+    return (
+      <View key={`${keyPrefix}-${item.title}`} style={styles.marqueeItem}>
+        <View style={[styles.marqueeIconWrap, isDark && styles.marqueeIconWrapDark]}>
+          <AppIcon name={item.icon as any} color={isDark ? '#EC4899' : '#7C3AED'} size={14} />
+        </View>
+        <Text
+          numberOfLines={1}
+          style={{
+            color: isDark ? '#FFFFFF' : '#1E1430',
+            fontFamily: fontFamily.sansBold,
+            fontSize: 12.5,
+            letterSpacing: 0.2,
+            flexShrink: 0,
+          }}
+        >
+          {item.title}
+        </Text>
+        {formattedSubtitle ? (
+          <Text
+            numberOfLines={1}
+            style={{
+              color: isDark ? '#A78BFA' : '#7C3AED',
+              fontFamily: fontFamily.sansMedium,
+              fontSize: 11,
+              flexShrink: 0,
+            }}
+          >
+            {formattedSubtitle}
+          </Text>
+        ) : null}
+      </View>
+    );
+  };
 
   return (
     <View style={[styles.marqueeShell, isDark && styles.marqueeShellDark]}>
       <Animated.View style={[styles.marqueeRow, { transform: [{ translateX }] }]}>
-        {repeatedItems.map((item, idx) => (
-          <View key={`${item.title}-${idx}`} style={[styles.marqueeItem, { width: PROMO_ITEM_W }]}>
-            <View style={[styles.marqueeIconWrap, isDark && styles.marqueeIconWrapDark]}>
-              <AppIcon name={item.icon as any} color={isDark ? '#EC4899' : '#7C3AED'} size={14} />
-            </View>
-            <Text style={{ color: isDark ? '#FFFFFF' : '#1E1430', fontFamily: fontFamily.sansBold, fontSize: 12.5, letterSpacing: 0.2 }}>
-              {item.title}
-            </Text>
-            <Text style={{ color: isDark ? '#A78BFA' : '#7C3AED', fontFamily: fontFamily.sansMedium, fontSize: 10.5 }}>
-              · {item.subtitle}
-            </Text>
-          </View>
-        ))}
+        {/* Set 1: Measured dynamically via onLayout for exact pixel width */}
+        <View
+          style={styles.marqueeSet}
+          onLayout={(e) => {
+            const measured = Math.round(e.nativeEvent.layout.width);
+            if (measured > 0 && Math.abs(measured - contentWidth) > 1) {
+              setContentWidth(measured);
+            }
+          }}
+        >
+          {displayItems.map((item, idx) => renderMarqueeItem(item, `s1-${idx}`))}
+        </View>
+
+        {/* Set 2: Duplicate for seamless continuous loop */}
+        <View style={styles.marqueeSet}>
+          {displayItems.map((item, idx) => renderMarqueeItem(item, `s2-${idx}`))}
+        </View>
+
+        {/* Set 3: Extra copy ensuring full coverage across all devices */}
+        <View style={styles.marqueeSet}>
+          {displayItems.map((item, idx) => renderMarqueeItem(item, `s3-${idx}`))}
+        </View>
+
+        {/* Set 4: Safety buffer */}
+        <View style={styles.marqueeSet}>
+          {displayItems.map((item, idx) => renderMarqueeItem(item, `s4-${idx}`))}
+        </View>
       </Animated.View>
     </View>
   );
@@ -1288,7 +1365,7 @@ function CategoryGridSection({
 
   const [activePage, setActivePage] = useState(0);
   const pageWidth = W - spacing[4] * 2;
-  const cardWidth = (pageWidth - 12) / 2;
+  const cardWidth = Math.floor((pageWidth - 12) / 2);
 
   // Chunk categories into groups of 4 (2x2 per page)
   const pages = useMemo(() => {
@@ -1329,7 +1406,7 @@ function CategoryGridSection({
         disableIntervalMomentum
         contentContainerStyle={{ paddingHorizontal: spacing[4], gap: 12 }}
         keyExtractor={(_, index) => `cat-page-${index}`}
-        onMomentumScrollEnd={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
+        onMomentumScrollEnd={(e: any) => {
           const idx = Math.round(e.nativeEvent.contentOffset.x / (pageWidth + 12));
           setActivePage(idx);
         }}
@@ -1346,93 +1423,102 @@ function CategoryGridSection({
                   activeOpacity={0.88}
                   style={{
                     width: cardWidth,
-                    minHeight: 124,
+                    height: 182,
                     borderRadius: 20,
                     backgroundColor: isDark ? theme.bgDark : theme.bgLight,
                     borderWidth: 1.2,
                     borderColor: isDark ? theme.borderDark : theme.borderLight,
-                    padding: 14,
-                    justifyContent: 'space-between',
                     shadowColor: theme.accent,
                     shadowOffset: { width: 0, height: 3 },
                     shadowOpacity: isDark ? 0.25 : 0.08,
                     shadowRadius: 8,
                     elevation: 3,
                     overflow: 'hidden',
-                    position: 'relative',
                   }}
                 >
-                  {/* Background ambient glow circle */}
+                  {/* Hero Image Showcase Area */}
                   <View
                     style={{
-                      position: 'absolute',
-                      top: -15,
-                      right: -15,
-                      width: 70,
-                      height: 70,
-                      borderRadius: 35,
-                      backgroundColor: theme.accent,
-                      opacity: isDark ? 0.15 : 0.08,
+                      width: '100%',
+                      height: 126,
+                      backgroundColor: isDark ? 'rgba(0,0,0,0.25)' : '#F8F9FA',
+                      position: 'relative',
+                      overflow: 'hidden',
                     }}
-                  />
+                  >
+                    <Image
+                      source={img}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode="cover"
+                    />
 
-                  {/* Top Row: Badge & Circular Image Shield */}
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {/* Floating Luxury Tag Chip */}
                     <View
                       style={{
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                        position: 'absolute',
+                        top: 8,
+                        left: 8,
+                        backgroundColor: isDark ? 'rgba(15, 12, 24, 0.85)' : 'rgba(255, 255, 255, 0.92)',
                         paddingHorizontal: 8,
                         paddingVertical: 3,
-                        borderRadius: 10,
+                        borderRadius: 8,
                         borderWidth: 1,
-                        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
+                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
                       }}
                     >
-                      <Text style={{ color: theme.accent, fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 1 }}>
+                      <Text style={{ color: theme.accent, fontFamily: fontFamily.sansBold, fontSize: 8.5, letterSpacing: 1 }}>
                         {theme.badge}
                       </Text>
                     </View>
+                  </View>
+
+                  {/* Bottom Category Name & Arrow */}
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                    }}
+                  >
+                    <View style={{ flex: 1, paddingRight: 6 }}>
+                      <Text
+                        style={{
+                          color: colors.textPrimary,
+                          fontFamily: fontFamily.sansBold,
+                          fontSize: 14.5,
+                          letterSpacing: -0.2,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {cat.name}
+                      </Text>
+                      <Text
+                        style={{
+                          color: colors.textMuted,
+                          fontFamily: fontFamily.sans,
+                          fontSize: 10,
+                          marginTop: 1,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {theme.sub}
+                      </Text>
+                    </View>
 
                     <View
                       style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 19,
-                        borderWidth: 1.5,
-                        borderColor: theme.accent,
-                        overflow: 'hidden',
-                        backgroundColor: colors.surface,
-                        shadowColor: theme.accent,
-                        shadowOpacity: 0.2,
-                        shadowRadius: 4,
-                        elevation: 2,
+                        width: 26,
+                        height: 26,
+                        borderRadius: 13,
+                        backgroundColor: isDark ? theme.iconBgDark : theme.iconBgLight,
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      <Image source={img} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                    </View>
-                  </View>
-
-                  {/* Bottom: Title & Explore Link */}
-                  <View style={{ marginTop: 10 }}>
-                    <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 16 }} numberOfLines={1}>
-                      {cat.name}
-                    </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 10.5 }}>
-                        {theme.sub}
-                      </Text>
-                      <View
-                        style={{
-                          width: 22,
-                          height: 22,
-                          borderRadius: 11,
-                          backgroundColor: isDark ? theme.iconBgDark : theme.iconBgLight,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <AppIcon name="arrow-top-right" size={13} color={theme.accent} />
-                      </View>
+                      <AppIcon name="arrow-right" size={13} color={theme.accent} />
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -1512,13 +1598,12 @@ function CategoryCarouselBanners({
               onPress={() => goShop({ categoryId: item.id, categoryName: item.name })}
               activeOpacity={0.9}
               style={{
-                width: W * 0.74,
-                height: 140,
+                width: W * 0.78,
+                height: 156,
                 borderRadius: 22,
                 backgroundColor: isDark ? theme.bgDark : theme.bgLight,
                 borderWidth: 1.2,
                 borderColor: isDark ? theme.borderDark : theme.borderLight,
-                padding: 16,
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -1528,25 +1613,19 @@ function CategoryCarouselBanners({
                 shadowRadius: 10,
                 elevation: 4,
                 overflow: 'hidden',
-                position: 'relative',
               }}
             >
-              {/* Background ambient accent orb */}
+              {/* Left Content Column */}
               <View
                 style={{
-                  position: 'absolute',
-                  top: -20,
-                  right: -20,
-                  width: 100,
-                  height: 100,
-                  borderRadius: 50,
-                  backgroundColor: theme.accent,
-                  opacity: isDark ? 0.12 : 0.08,
+                  flex: 1,
+                  paddingLeft: 16,
+                  paddingRight: 10,
+                  paddingVertical: 16,
+                  justifyContent: 'space-between',
+                  height: '100%',
                 }}
-              />
-
-              {/* Left Content Column */}
-              <View style={{ flex: 1, paddingRight: 10, justifyContent: 'space-between', height: '100%' }}>
+              >
                 <View>
                   <View
                     style={{
@@ -1555,7 +1634,7 @@ function CategoryCarouselBanners({
                       paddingVertical: 3,
                       borderRadius: 8,
                       alignSelf: 'flex-start',
-                      marginBottom: 6,
+                      marginBottom: 8,
                       borderWidth: 1,
                       borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)',
                     }}
@@ -1564,38 +1643,68 @@ function CategoryCarouselBanners({
                       {theme.badge} SPOTLIGHT
                     </Text>
                   </View>
-                  <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 18 }} numberOfLines={1}>
+
+                  <Text
+                    style={{
+                      color: colors.textPrimary,
+                      fontFamily: fontFamily.sansBold,
+                      fontSize: 19,
+                      letterSpacing: -0.3,
+                    }}
+                    numberOfLines={1}
+                  >
                     {item.name}
                   </Text>
-                  <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 11, marginTop: 2 }} numberOfLines={1}>
+
+                  <Text
+                    style={{
+                      color: colors.textMuted,
+                      fontFamily: fontFamily.sans,
+                      fontSize: 11,
+                      marginTop: 3,
+                    }}
+                    numberOfLines={1}
+                  >
                     {theme.sub}
                   </Text>
                 </View>
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Text style={{ color: theme.accent, fontFamily: fontFamily.sansBold, fontSize: 12 }}>Shop Collection</Text>
-                  <AppIcon name="arrow-right" size={13} color={theme.accent} />
+                {/* Chic CTA Button */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                    backgroundColor: theme.accent,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6.5,
+                    borderRadius: 18,
+                    alignSelf: 'flex-start',
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontFamily: fontFamily.sansBold, fontSize: 11.5 }}>
+                    Shop Now
+                  </Text>
+                  <AppIcon name="arrow-right" size={12} color="#FFFFFF" />
                 </View>
               </View>
 
-              {/* Right Showcase Card with Gold Border & Image */}
+              {/* Right Showcase Card: Full-Height Edge-to-Edge Hero Image */}
               <View
                 style={{
-                  width: 84,
-                  height: 96,
-                  borderRadius: 16,
-                  borderWidth: 1.5,
-                  borderColor: theme.accent,
-                  backgroundColor: colors.surface,
+                  width: '52%',
+                  height: '100%',
+                  borderTopRightRadius: 22,
+                  borderBottomRightRadius: 22,
+                  backgroundColor: isDark ? 'rgba(0,0,0,0.25)' : '#F8F9FA',
                   overflow: 'hidden',
-                  shadowColor: theme.accent,
-                  shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 6,
-                  elevation: 3,
                 }}
               >
-                <Image source={img} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                <Image
+                  source={img}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
               </View>
             </TouchableOpacity>
           );
@@ -1764,6 +1873,7 @@ export function HomeScreen({ navigation }: Props) {
   const [search, setSearch] = useState('');
   const [bannerIdx, setBannerIdx] = useState(0);
   const [adVisible, setAdVisible] = useState(false);
+  const [promoItems, setPromoItems] = useState<PromoTickerItem[]>(DEFAULT_RETAIL_PROMO_ITEMS);
 
   const bannerRef = useRef<Animated.FlatList<any> | null>(null);
   const bannerTimer = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1772,15 +1882,19 @@ export function HomeScreen({ navigation }: Props) {
 
   const loadInitial = useCallback(async () => {
     try {
-      const [banRes, catRes, p1Res, p2Res, sectionsRes] = await Promise.allSettled([
+      const [banRes, catRes, p1Res, p2Res, sectionsRes, promoRes] = await Promise.allSettled([
         fetchActiveBanners(),
         fetchCategories(),
         fetchProducts({ page: 1, limit: 16, sortBy: 'createAt', sortOrder: 'DESC' }),
         fetchProducts({ page: 2, limit: 16, sortBy: 'createAt', sortOrder: 'DESC' }),
         fetchAllHomeSections('retail'),
+        fetchActivePromoTicker('retail'),
       ]);
       if (banRes.status === 'fulfilled') setBanners(unwrapArray(banRes.value));
       if (catRes.status === 'fulfilled') setCategories(unwrapArray(catRes.value));
+      if (promoRes.status === 'fulfilled' && Array.isArray(promoRes.value) && promoRes.value.length > 0) {
+        setPromoItems(promoRes.value);
+      }
 
       let allProds: any[] = [];
       if (p1Res.status === 'fulfilled') {
@@ -2231,7 +2345,7 @@ export function HomeScreen({ navigation }: Props) {
 
         ListHeaderComponent={
           <View>
-            <PromoMarquee fontFamily={fontFamily} isDark={isDark} />
+            <PromoMarquee fontFamily={fontFamily} isDark={isDark} items={promoItems} />
 
             {banners.length > 0 && (
               <View style={[styles.bannerWrap, { marginHorizontal: spacing[4], borderRadius: radius.xl, marginTop: spacing[4] }]}>
@@ -3023,13 +3137,20 @@ const styles = StyleSheet.create({
   marqueeRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'nowrap',
+  },
+  marqueeSet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'nowrap',
   },
   marqueeItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    flexShrink: 0,
   },
   marqueeIconWrap: {
     width: 26,

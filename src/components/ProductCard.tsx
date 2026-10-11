@@ -18,7 +18,7 @@ const PRODUCT_BADGES = [
 ];
 
 function ProductCardComponent({ product, onPress }: Props) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { colors, fontFamily, fontSize, radius } = theme;
   const { isWishlisted, toggle } = useWishlist();
   const { addItem, updateQty, removeItem, items } = useCart();
@@ -37,13 +37,30 @@ function ProductCardComponent({ product, onPress }: Props) {
   const rating = parseFloat(product.avgRating || '0');
   const reviewCount = product.reviewCount || 0;
 
-  // Rotating Badge state & animation (every 3 seconds)
+  // Dynamic Tag vs Rotating Badge
+  const rawTag = product.productTag !== undefined && product.productTag !== null ? String(product.productTag).trim() : null;
+  const isExplicitNone = rawTag !== null && (rawTag === '' || rawTag.toLowerCase() === 'none');
+  const hasCustomTag = rawTag !== null && !isExplicitNone;
+
+  const getCustomBadge = (tag: string) => {
+    const t = tag.trim().toUpperCase();
+    if (t === 'BESTSELLER' || t === 'BEST SELLER') return { label: 'BESTSELLER', bg: '#BE123C' };
+    if (t === 'FEATURED') return { label: 'FEATURED', bg: '#D97706' };
+    if (t === 'TRENDING') return { label: 'TRENDING', bg: '#7C3AED' };
+    if (t === 'HOT' || t === 'HOT DEAL') return { label: 'HOT', bg: '#DC2626' };
+    if (t === 'NEW' || t === 'NEW ARRIVAL') return { label: 'NEW', bg: '#059669' };
+    if (t === 'EXCLUSIVE') return { label: 'EXCLUSIVE', bg: '#0D9488' };
+    return { label: t, bg: '#7C3AED' };
+  };
+
+  // Rotating Badge state & animation (every 3 seconds) for products without custom tag
   const initialBadgeIdx = (Number(product.id) || 0) % PRODUCT_BADGES.length;
   const [badgeIdx, setBadgeIdx] = useState(initialBadgeIdx);
   const badgeAnim = useRef(new Animated.Value(1)).current;
   const badgeTranslateY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (hasCustomTag || isExplicitNone) return;
     const interval = setInterval(() => {
       Animated.parallel([
         Animated.timing(badgeAnim, {
@@ -75,9 +92,11 @@ function ProductCardComponent({ product, onPress }: Props) {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [badgeAnim, badgeTranslateY]);
+  }, [badgeAnim, badgeTranslateY, hasCustomTag, isExplicitNone]);
 
-  const currentBadge = PRODUCT_BADGES[badgeIdx];
+  const currentBadge = hasCustomTag
+    ? getCustomBadge(rawTag!)
+    : (isExplicitNone ? null : PRODUCT_BADGES[badgeIdx]);
 
   return (
     <TouchableOpacity
@@ -89,29 +108,29 @@ function ProductCardComponent({ product, onPress }: Props) {
           backgroundColor: colors.surfaceElevated,
           borderRadius: radius.xl,
           borderWidth: 1,
-          borderColor: colors.border + '60',
+          borderColor: colors.border + '55',
         }
       ]}>
 
-      {/* Image Container */}
-      <View style={[styles.imgWrap, { borderRadius: radius.lg, backgroundColor: colors.surface, overflow: 'hidden' }]}>
+      {/* Hero Edge-to-Edge Image Container (Clean & Unobstructed) */}
+      <View style={[styles.imgWrap, { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
         {imageUrl ? (
           <Image source={{ uri: imageUrl }} style={styles.img} resizeMode="cover" />
         ) : (
           <View style={[styles.img, { backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }]}>
-            <AppIcon name="diamond-stone" size={28} color={colors.primary} />
+            <AppIcon name="diamond-stone" size={32} color={colors.primary} />
           </View>
         )}
 
-        {/* Morphing Rotating Top Badge */}
-        {!outOfStock && (
+        {/* Dynamic / Rotating Top-Left Tag Badge */}
+        {!outOfStock && currentBadge && (
           <Animated.View
             style={[
               styles.animatedBadge,
               {
                 backgroundColor: currentBadge.bg,
-                opacity: badgeAnim,
-                transform: [{ translateY: badgeTranslateY }],
+                opacity: hasCustomTag ? 1 : badgeAnim,
+                transform: [{ translateY: hasCustomTag ? 0 : badgeTranslateY }],
               },
             ]}>
             <Text style={styles.animatedBadgeText}>
@@ -120,6 +139,7 @@ function ProductCardComponent({ product, onPress }: Props) {
           </Animated.View>
         )}
 
+        {/* Out of Stock Overlay */}
         {outOfStock && (
           <View style={styles.oosBanner}>
             <Text style={styles.oosText}>Out of Stock</Text>
@@ -127,73 +147,78 @@ function ProductCardComponent({ product, onPress }: Props) {
         )}
       </View>
 
-      {/* Info Content */}
+      {/* Info Content: Compact, Elegant, Zero Wasted Space */}
       <View style={styles.info}>
-        {/* Rating & Like Row */}
-        <View style={styles.metaRow}>
-          {rating > 0 ? (
-            <View style={styles.starsRow}>
-              <AppIcon name="star" size={11} color={colors.primary} />
-              <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 10.5, marginLeft: 2 }}>
-                {rating.toFixed(1)}
-              </Text>
-              <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 10, marginLeft: 2 }}>
-                ({reviewCount})
-              </Text>
-            </View>
-          ) : (
-            <View />
-          )}
-
-          {/* Like / Wishlist Button */}
-          <TouchableOpacity
-            onPress={() => toggle(product.id)}
+        {/* Title & Wishlist Button Row (Heart sits beside title, NOT on image) */}
+        <View style={styles.titleRow}>
+          <Text
             style={[
-              styles.infoWishBtn,
+              styles.productTitle,
               {
-                backgroundColor: wishlisted ? '#FF4B5C18' : colors.surface,
-                borderColor: wishlisted ? '#FF4B5C40' : colors.border + '80',
+                color: colors.textPrimary,
+                fontFamily: fontFamily.sansMedium,
               }
             ]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <AppIcon name={wishlisted ? 'heart' : 'heart-outline'} size={14} color={wishlisted ? '#FF4B5C' : colors.textMuted} />
+            numberOfLines={1}>
+            {product.name}
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => toggle(product.id)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
+            style={styles.wishBtn}>
+            <AppIcon
+              name={wishlisted ? 'heart' : 'heart-outline'}
+              size={18}
+              color={wishlisted ? '#FF4B5C' : (isDark ? '#A1A1AA' : '#71717A')}
+            />
           </TouchableOpacity>
         </View>
 
-        {/* Product Name */}
-        <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansMedium, fontSize: 12.5, lineHeight: 16, minHeight: 32, marginTop: 1 }} numberOfLines={2}>
-          {product.name}
-        </Text>
-
-        {/* Price Row & Add / Qty Control */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-          <View style={{ flex: 1, paddingRight: 4 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4, flexWrap: 'wrap' }}>
-              <Text style={{ color: colors.textPrimary, fontFamily: fontFamily.sansBold, fontSize: 13.5 }} numberOfLines={1}>
+        {/* Price Row & Add to Cart / Qty Control */}
+        <View style={styles.bottomRow}>
+          <View style={{ flex: 1, paddingRight: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 5, flexWrap: 'wrap' }}>
+              <Text
+                style={{
+                  color: colors.textPrimary,
+                  fontFamily: fontFamily.sansBold,
+                  fontSize: 14.5,
+                  fontWeight: '700',
+                }}
+                numberOfLines={1}>
                 ₹{finalPrice.toLocaleString('en-IN')}
               </Text>
               {hasDiscount && (
-                <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: 9.5, textDecorationLine: 'line-through' }} numberOfLines={1}>
+                <Text
+                  style={{
+                    color: colors.textMuted,
+                    fontFamily: fontFamily.sans,
+                    fontSize: 10,
+                    textDecorationLine: 'line-through',
+                  }}
+                  numberOfLines={1}>
                   ₹{basePrice.toLocaleString('en-IN')}
                 </Text>
               )}
             </View>
-            {hasDiscount && (
-              <View style={{
-                alignSelf: 'flex-start',
-                backgroundColor: '#05966914',
-                borderColor: '#05966938',
-                borderWidth: 1,
-                paddingHorizontal: 5,
-                paddingVertical: 1.5,
-                borderRadius: 4,
-                marginTop: 3,
-              }}>
-                <Text style={{ color: '#059669', fontFamily: fontFamily.sansBold, fontSize: 9, letterSpacing: 0.2 }}>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 1 }}>
+              {hasDiscount && (
+                <Text style={{ color: '#059669', fontFamily: fontFamily.sansBold, fontSize: 10, fontWeight: '700' }}>
                   {discountPct}% OFF
                 </Text>
-              </View>
-            )}
+              )}
+              {rating > 0 && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                  <AppIcon name="star" size={10} color="#F59E0B" />
+                  <Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: fontFamily.sansBold }}>
+                    {rating.toFixed(1)}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
 
           {/* Quick Add or Qty Counter */}
@@ -256,65 +281,125 @@ function ProductCardComponent({ product, onPress }: Props) {
 export const ProductCard = memo(ProductCardComponent);
 
 const styles = StyleSheet.create({
-  card: { overflow: 'hidden', flex: 1, position: 'relative', marginBottom: 12, padding: 6 },
-  imgWrap: { position: 'relative', aspectRatio: 0.85, overflow: 'hidden' },
-  img: { width: '100%', height: '100%' },
-  oosBanner: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
-  oosText: { color: '#fff', fontWeight: '700', fontSize: 10, letterSpacing: 0.5, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  card: {
+    overflow: 'hidden',
+    flex: 1,
+    position: 'relative',
+    marginBottom: 10,
+    padding: 0,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  imgWrap: {
+    position: 'relative',
+    aspectRatio: 0.75, // Extra tall 3:4 portrait ratio for bigger, stunning jewellery presentation
+    overflow: 'hidden',
+  },
+  img: {
+    width: '100%',
+    height: '100%',
+  },
+  oosBanner: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  oosText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 10.5,
+    letterSpacing: 0.5,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
   animatedBadge: {
     position: 'absolute',
-    top: 7,
-    left: 7,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 6,
+    top: 8,
+    left: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 7,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2.5,
+    elevation: 3,
   },
   animatedBadgeText: {
     color: '#FFFFFF',
-    fontSize: 8.5,
+    fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
-  discBadge: {
-    position: 'absolute',
-    bottom: 7,
-    left: 7,
-    paddingHorizontal: 6,
-    paddingVertical: 2.5,
-    borderRadius: 6,
+  info: {
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    paddingBottom: 10,
+    gap: 4,
   },
-  discText: {
-    color: '#FFF',
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  metaRow: {
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 24,
-    marginTop: 4,
+    gap: 6,
   },
-  infoWishBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 1,
+  productTitle: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 17,
+    fontWeight: '600',
+  },
+  wishBtn: {
+    padding: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  quickAddBtnOuter: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3 },
-  qtyControl: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 28, borderRadius: 14, borderWidth: 1, paddingHorizontal: 3, gap: 2 },
-  qtyBtn: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
-  qtyText: { fontSize: 12, minWidth: 16, textAlign: 'center' },
-  info: { paddingVertical: 4, paddingHorizontal: 2, gap: 2 },
-  starsRow: { flexDirection: 'row', alignItems: 'center' },
-  priceRow: { flexDirection: 'row', alignItems: 'center' },
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 2,
+  },
+  quickAddBtnOuter: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  qtyControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 1,
+    paddingHorizontal: 3,
+    gap: 3,
+  },
+  qtyBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    minWidth: 18,
+    textAlign: 'center',
+  },
 });
