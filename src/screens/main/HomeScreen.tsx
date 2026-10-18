@@ -1272,7 +1272,6 @@ const LUXURY_CATEGORY_THEMES = [
   {
     icon: 'star-four-points-outline',
     badge: 'TRENDING',
-    sub: '250+ Handcrafted Designs',
     bgLight: '#FFF8F0',
     bgDark: '#1C1208',
     borderLight: 'rgba(217, 119, 6, 0.28)',
@@ -1284,7 +1283,6 @@ const LUXURY_CATEGORY_THEMES = [
   {
     icon: 'clock-time-four-outline',
     badge: 'LUXURY',
-    sub: 'Premium Jewellery Pieces',
     bgLight: '#F3F4FF',
     bgDark: '#0E1226',
     borderLight: 'rgba(79, 70, 229, 0.28)',
@@ -1296,7 +1294,6 @@ const LUXURY_CATEGORY_THEMES = [
   {
     icon: 'gift-outline',
     badge: 'BESTSELLER',
-    sub: 'Gift Sets & Combos',
     bgLight: '#FFF0F4',
     bgDark: '#200A14',
     borderLight: 'rgba(225, 29, 72, 0.28)',
@@ -1308,7 +1305,6 @@ const LUXURY_CATEGORY_THEMES = [
   {
     icon: 'circle-double',
     badge: 'HERITAGE',
-    sub: 'Traditional & Modern',
     bgLight: '#EFFDF5',
     bgDark: '#071A11',
     borderLight: 'rgba(5, 150, 105, 0.28)',
@@ -1320,7 +1316,6 @@ const LUXURY_CATEGORY_THEMES = [
   {
     icon: 'diamond-stone',
     badge: 'EXCLUSIVE',
-    sub: 'Statement & Everyday',
     bgLight: '#F6F2FF',
     bgDark: '#160C26',
     borderLight: 'rgba(124, 58, 237, 0.28)',
@@ -1332,7 +1327,6 @@ const LUXURY_CATEGORY_THEMES = [
   {
     icon: 'link-variant',
     badge: 'POPULAR',
-    sub: 'Chains & Layering',
     bgLight: '#FFFBEA',
     bgDark: '#201605',
     borderLight: 'rgba(180, 83, 9, 0.28)',
@@ -1495,17 +1489,6 @@ function CategoryGridSection({
                       >
                         {cat.name}
                       </Text>
-                      <Text
-                        style={{
-                          color: colors.textMuted,
-                          fontFamily: fontFamily.sans,
-                          fontSize: 10,
-                          marginTop: 1,
-                        }}
-                        numberOfLines={1}
-                      >
-                        {theme.sub}
-                      </Text>
                     </View>
 
                     <View
@@ -1654,18 +1637,6 @@ function CategoryCarouselBanners({
                     numberOfLines={1}
                   >
                     {item.name}
-                  </Text>
-
-                  <Text
-                    style={{
-                      color: colors.textMuted,
-                      fontFamily: fontFamily.sans,
-                      fontSize: 11,
-                      marginTop: 3,
-                    }}
-                    numberOfLines={1}
-                  >
-                    {theme.sub}
                   </Text>
                 </View>
 

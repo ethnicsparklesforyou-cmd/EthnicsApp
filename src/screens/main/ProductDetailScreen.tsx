@@ -192,9 +192,6 @@ export function ProductDetailScreen({ navigation, route }: Props) {
       size: selectedSize || null,
       stockQuantity: stockQty,
     });
-    if (isAuthenticated && user) {
-      addToServerCart({ userId: user.id, productId: product.id, quantity, size: selectedSize || null }).catch(() => { });
-    }
     show({ type: 'success', title: 'Added to Bag', message: `${product.name} (${quantity}) added to your bag.` });
     return true;
   };
@@ -324,7 +321,7 @@ export function ProductDetailScreen({ navigation, route }: Props) {
                   style={{ width: W, height: HERO_H }}
                 >
                   <Image
-                    source={{ uri: item }}
+                    source={{ uri: item, cache: 'force-cache' }}
                     style={{ width: '100%', height: '100%' }}
                     resizeMode="cover"
                   />
@@ -384,7 +381,7 @@ export function ProductDetailScreen({ navigation, route }: Props) {
                       }
                     ]}
                   >
-                    <Image source={{ uri: item }} style={styles.thumb} resizeMode="cover" />
+                    <Image source={{ uri: item, cache: 'force-cache' }} style={styles.thumb} resizeMode="cover" />
                   </View>
                 </TouchableOpacity>
               )}
@@ -884,7 +881,7 @@ export function ProductDetailScreen({ navigation, route }: Props) {
                   style={{ width: W, flex: 1 }}
                 >
                   <Image
-                    source={{ uri: item }}
+                    source={{ uri: item, cache: 'force-cache' }}
                     style={{ width: W, height: '100%' }}
                     resizeMode="contain"
                   />
@@ -910,7 +907,7 @@ export function ProductDetailScreen({ navigation, route }: Props) {
                       viewerIndex === idx && styles.viewerThumbActive
                     ]}
                   >
-                    <Image source={{ uri: img }} style={styles.viewerThumbImg} resizeMode="contain" />
+                    <Image source={{ uri: img, cache: 'force-cache' }} style={styles.viewerThumbImg} resizeMode="contain" />
                   </TouchableOpacity>
                 ))}
               </ScrollView>

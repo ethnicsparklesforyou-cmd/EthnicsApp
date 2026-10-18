@@ -30,6 +30,11 @@ function ProductCardComponent({ product, onPress }: Props) {
   const hasDiscount = discount > 0;
   const discountPct = hasDiscount ? Math.round((discount / basePrice) * 100) : 0;
   const imageUrl = getFirstImageUrl(product);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [imageUrl]);
   const cartItem = items.find(i => String(i.productId) === String(product.id));
   const qtyInCart = cartItem ? cartItem.quantity : 0;
   const wishlisted = isWishlisted(product.id);
@@ -113,11 +118,23 @@ function ProductCardComponent({ product, onPress }: Props) {
       ]}>
 
       {/* Hero Edge-to-Edge Image Container (Clean & Unobstructed) */}
-      <View style={[styles.imgWrap, { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
+      <View style={[styles.imgWrap, { backgroundColor: isDark ? '#18181B' : '#F4F4F5', borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
         {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.img} resizeMode="cover" />
+          <>
+            <Image
+              source={{ uri: imageUrl, cache: 'force-cache' }}
+              style={[styles.img, { opacity: imageLoaded ? 1 : 0 }]}
+              resizeMode="cover"
+              onLoad={() => setImageLoaded(true)}
+            />
+            {!imageLoaded && (
+              <View style={[styles.imgPlaceholder, { backgroundColor: isDark ? '#18181B' : '#F4F4F5' }]}>
+                <AppIcon name="diamond-stone" size={26} color={isDark ? '#3F3F46' : '#D4D4D8'} />
+              </View>
+            )}
+          </>
         ) : (
-          <View style={[styles.img, { backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }]}>
+          <View style={[styles.img, { backgroundColor: isDark ? '#18181B' : '#F4F4F5', alignItems: 'center', justifyContent: 'center' }]}>
             <AppIcon name="diamond-stone" size={32} color={colors.primary} />
           </View>
         )}
@@ -301,6 +318,11 @@ const styles = StyleSheet.create({
   img: {
     width: '100%',
     height: '100%',
+  },
+  imgPlaceholder: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   oosBanner: {
     ...StyleSheet.absoluteFill,

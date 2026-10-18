@@ -78,6 +78,7 @@ export function LoginScreen({ navigation: _navigation }: Props) {
         addToServerCart({ userId, productId: Number(item.productId), quantity: item.quantity, size: item.size || null })
       )
     );
+    await AsyncStorage.removeItem('@jwellery_guest_cart').catch(() => {});
   };
 
   const handlePhoneSubmit = async () => {

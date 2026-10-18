@@ -244,7 +244,7 @@ export function AccountScreen({ navigation }: Props) {
 
         {/* App version */}
         <Text style={{ color: colors.textMuted, fontFamily: fontFamily.sans, fontSize: fontSize.xs, textAlign: 'center', marginTop: 24 }}>
-          Ethnics Retail v1.0.7 · EEAS Lifestyle
+          Ethnics Retail v1.0.9 · EEAS Lifestyle
         </Text>
 
       </ScrollView>

@@ -124,22 +124,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (syncedUserRef.current === user.id) return;
+      syncedUserRef.current = user.id;
 
-      // Migrate any guest cart items to server first
-      if (items.length > 0) {
-        await Promise.allSettled(
-          items.map(item =>
-            addToServerCart({
-              userId: user.id,
-              productId: Number(item.productId),
-              quantity: item.quantity,
-              size: item.size || null,
-            }),
-          ),
-        );
-      }
-
-      // Then fetch the merged server cart
+      // Fetch the true server cart as single source of truth for logged-in user
       const serverCart = await fetchServerCart(user.id);
       const serverItems = serverCart?.data?.items || [];
       if (Array.isArray(serverItems) && serverItems.length && !isCartClearedRef.current) {

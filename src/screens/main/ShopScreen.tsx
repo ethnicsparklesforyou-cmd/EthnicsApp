@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { AppIcon, AppGradient, PageHeader, Screen } from '../../components/common';
 import { ProductCard } from '../../components/ProductCard';
+import { prefetchProductImages } from '../../utils/imageUtils';
 import { useTheme } from '../../context/ThemeContext';
 import { fetchCategories, fetchProducts } from '../../services/products';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -250,6 +251,7 @@ export function ShopScreen({ navigation, route }: Props) {
         const pagination = res?.data?.pagination || {};
         const inStockProds = prods.filter((p: any) => p.stockQuantity === undefined || p.stockQuantity === null || Number(p.stockQuantity) > 0);
         setProducts(prev => (append ? [...prev, ...inStockProds] : inStockProds));
+        prefetchProductImages(inStockProds, 8, 450);
         setHasMore(pagination.hasNextPage ?? false);
         setTotalCount(prev => (append ? prev + inStockProds.length : inStockProds.length));
         setPage(pg);
