@@ -33,11 +33,14 @@ export async function fetchAllHomeSections(appType: string = 'retail'): Promise<
     const json = await response.json();
     const data = json?.data || json;
 
+    const filterInStock = (list: any[]) =>
+      Array.isArray(list) ? list.filter((p) => Number(p?.stockQuantity ?? 0) > 0) : [];
+
     return {
-      new_arrivals: Array.isArray(data?.new_arrivals) ? data.new_arrivals : [],
-      curated_picks: Array.isArray(data?.curated_picks) ? data.curated_picks : [],
-      exclusive_deals: Array.isArray(data?.exclusive_deals) ? data.exclusive_deals : [],
-      trending_now: Array.isArray(data?.trending_now) ? data.trending_now : [],
+      new_arrivals: filterInStock(data?.new_arrivals),
+      curated_picks: filterInStock(data?.curated_picks),
+      exclusive_deals: filterInStock(data?.exclusive_deals),
+      trending_now: filterInStock(data?.trending_now),
       meta: data?.meta || {},
     };
   } catch (error) {

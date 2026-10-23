@@ -1853,11 +1853,10 @@ export function HomeScreen({ navigation }: Props) {
 
   const loadInitial = useCallback(async () => {
     try {
-      const [banRes, catRes, p1Res, p2Res, sectionsRes, promoRes] = await Promise.allSettled([
+      const [banRes, catRes, prodsRes, sectionsRes, promoRes] = await Promise.allSettled([
         fetchActiveBanners(),
         fetchCategories(),
-        fetchProducts({ page: 1, limit: 16, sortBy: 'createAt', sortOrder: 'DESC' }),
-        fetchProducts({ page: 2, limit: 16, sortBy: 'createAt', sortOrder: 'DESC' }),
+        fetchProducts({ page: 1, limit: 32, sortBy: 'createAt', sortOrder: 'DESC' }),
         fetchAllHomeSections('retail'),
         fetchActivePromoTicker('retail'),
       ]);
@@ -1868,16 +1867,11 @@ export function HomeScreen({ navigation }: Props) {
       }
 
       let allProds: any[] = [];
-      if (p1Res.status === 'fulfilled') {
-        const b = p1Res.value?.data ?? p1Res.value?.result ?? p1Res.value;
-        const prods = b?.data?.products || b?.products || [];
-        allProds = [...prods];
-      }
-      if (p2Res.status === 'fulfilled') {
-        const b = p2Res.value?.data ?? p2Res.value?.result ?? p2Res.value;
+      if (prodsRes.status === 'fulfilled') {
+        const b = prodsRes.value?.data ?? prodsRes.value?.result ?? prodsRes.value;
         const prods = b?.data?.products || b?.products || [];
         const pagination = b?.data?.pagination || b?.pagination || {};
-        allProds = [...allProds, ...prods];
+        allProds = [...prods];
         setHasMore(pagination.hasNextPage ?? false);
       }
 
@@ -1886,10 +1880,6 @@ export function HomeScreen({ navigation }: Props) {
       const uniqueProds = Array.from(new Map(inStockAll.map(item => [String(item.id), item])).values());
 
       if (uniqueProds.length > 0) {
-        // Proactively warm image cache for instant AdModal & discovery experience
-        prefetchProductImages(uniqueProds, 4, 450);
-
-
         // Fallback sliced arrays if any section is not customized in admin panel
         const naFallback = uniqueProds.slice(0, 6);
         const exFallback = uniqueProds.slice(6, 12);
@@ -1916,6 +1906,15 @@ export function HomeScreen({ navigation }: Props) {
         if (curatedSections?.meta) {
           setSectionMetas(curatedSections.meta);
         }
+
+        // Proactively warm image cache for instant display across all home sections
+        const batchToWarm = [
+          ...(naCustom || naFallback),
+          ...(exCustom || exFallback),
+          ...(flCustom || flFallback),
+          ...uniqueProds.slice(0, 16),
+        ];
+        prefetchProductImages(batchToWarm, 24, 450);
 
         setNewArrivals(naCustom || (naFallback.length > 0 ? naFallback : uniqueProds));
         setExpressDrops(exCustom || (exFallback.length > 0 ? exFallback : uniqueProds));

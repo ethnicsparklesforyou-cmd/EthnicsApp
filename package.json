@@ -1,6 +1,6 @@
 {
   "name": "ethnics-retail",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -10,6 +10,7 @@
     "start:reset": "react-native start --reset-cache",
     "test": "jest",
     "build:android": "cd android && ./gradlew assembleRelease --no-daemon",
+    "build:android:bundle": "cd android && ./gradlew bundleRelease --no-daemon",
     "build:android:clean": "cd android && ./gradlew clean && ./gradlew assembleRelease --no-daemon",
     "clean": "cd android && ./gradlew clean"
   },

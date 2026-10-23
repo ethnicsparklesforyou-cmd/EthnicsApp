@@ -23,6 +23,7 @@ import { sendOtp as sendOtpRequest, verifyOtp as verifyOtpRequest, registerWithP
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { addToServerCart } from '../../services/cart';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AuthStackParamList } from '../../navigation/types';
 import { DEFAULT_COUNTRY, type CountryItem } from '../../constants/countries';
 
