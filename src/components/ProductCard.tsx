@@ -17,6 +17,8 @@ const PRODUCT_BADGES = [
   { label: 'TRENDING', bg: '#7C3AED' },
 ];
 
+const MEMORY_LOADED_IMAGES = new Set<string>();
+
 function ProductCardComponent({ product, onPress }: Props) {
   const { theme, isDark } = useTheme();
   const { colors, fontFamily, fontSize, radius } = theme;
@@ -36,6 +38,34 @@ function ProductCardComponent({ product, onPress }: Props) {
   const outOfStock = (product.stockQuantity ?? 1) === 0;
   const rating = parseFloat(product.avgRating || '0');
   const reviewCount = product.reviewCount || 0;
+
+  // Instant image cache state & progressive shimmer
+  const isInitiallyLoaded = Boolean(imageUrl && MEMORY_LOADED_IMAGES.has(imageUrl));
+  const [imageLoaded, setImageLoaded] = useState(isInitiallyLoaded);
+  const fadeImgAnim = useRef(new Animated.Value(isInitiallyLoaded ? 1 : 0)).current;
+  const pulseAnim = useRef(new Animated.Value(0.4)).current;
+
+  useEffect(() => {
+    if (imageLoaded) return;
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 0.85, duration: 750, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.35, duration: 750, useNativeDriver: true }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [imageLoaded, pulseAnim]);
+
+  const handleImageLoad = () => {
+    if (imageUrl) MEMORY_LOADED_IMAGES.add(imageUrl);
+    setImageLoaded(true);
+    Animated.timing(fadeImgAnim, {
+      toValue: 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  };
 
   // Dynamic Tag vs Rotating Badge
   const rawTag = product.productTag !== undefined && product.productTag !== null ? String(product.productTag).trim() : null;
@@ -114,17 +144,29 @@ function ProductCardComponent({ product, onPress }: Props) {
 
       {/* Hero Edge-to-Edge Image Container (Clean & Unobstructed) */}
       <View style={[styles.imgWrap, { backgroundColor: isDark ? '#18181B' : '#F4F4F5', borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl }]}>
-        {/* Placeholder underneath while loading */}
-        <View style={[StyleSheet.absoluteFill, styles.imgPlaceholder, { backgroundColor: isDark ? '#18181B' : '#F4F4F5' }]}>
-          <AppIcon name="diamond-stone" size={26} color={isDark ? '#3F3F46' : '#D4D4D8'} />
-        </View>
+        {/* Shimmer / Skeleton Placeholder (Active while image is fetching/decoding) */}
+        {!imageLoaded && (
+          <View style={[StyleSheet.absoluteFill, styles.img, { backgroundColor: isDark ? '#18181B' : '#F4F4F5', alignItems: 'center', justifyContent: 'center' }]}>
+            <Animated.View
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  backgroundColor: isDark ? '#27272A' : '#E4E4E7',
+                  opacity: pulseAnim,
+                }
+              ]}
+            />
+            <AppIcon name="diamond-stone" size={24} color={isDark ? '#3F3F46' : '#D4D4D8'} />
+          </View>
+        )}
 
         {imageUrl ? (
-          <Image
+          <Animated.Image
             source={{ uri: imageUrl, cache: 'force-cache' }}
-            style={styles.img}
+            style={[styles.img, { opacity: fadeImgAnim }]}
             resizeMode="cover"
-            fadeDuration={0}
+            onLoad={handleImageLoad}
+            fadeDuration={180}
           />
         ) : (
           <View style={[styles.img, { backgroundColor: isDark ? '#18181B' : '#F4F4F5', alignItems: 'center', justifyContent: 'center' }]}>

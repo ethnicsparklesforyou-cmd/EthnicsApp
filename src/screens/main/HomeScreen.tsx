@@ -1256,6 +1256,10 @@ function HorizontalProductRow({
         data={products}
         horizontal
         showsHorizontalScrollIndicator={false}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === 'android'}
         contentContainerStyle={{ paddingHorizontal: spacing[4], gap: 12 }}
         keyExtractor={item => 'hrow-' + item.id}
         renderItem={({ item }) => (
@@ -2430,6 +2434,10 @@ export function HomeScreen({ navigation }: Props) {
                     data={newArrivals}
                     horizontal
                     showsHorizontalScrollIndicator={false}
+                    initialNumToRender={4}
+                    maxToRenderPerBatch={4}
+                    windowSize={5}
+                    removeClippedSubviews={Platform.OS === 'android'}
                     contentContainerStyle={{ paddingHorizontal: spacing[4], paddingBottom: 6, gap: 12 }}
                     keyExtractor={item => 'na-' + item.id}
                     renderItem={({ item }) => (

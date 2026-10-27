@@ -394,15 +394,18 @@ export function CartScreen({ navigation }: Props) {
           return (
             <View style={[styles.cartItem, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.xl }]}>
               {/* Image with out-of-stock overlay */}
-              <View>
+              <View style={[styles.itemImg, { backgroundColor: colors.surfaceElevated, borderRadius: radius.lg, overflow: 'hidden' }]}>
                 {imageUrl ? (
                   <Image
-                    source={{ uri: imageUrl }}
-                    style={[styles.itemImg, { borderRadius: radius.lg, opacity: isOutOfStock ? 0.5 : 1 }]}
+                    source={{ uri: imageUrl, cache: 'force-cache' }}
+                    style={[StyleSheet.absoluteFill, styles.itemImg, { borderRadius: radius.lg, opacity: isOutOfStock ? 0.5 : 1 }]}
                     resizeMode="cover"
+                    fadeDuration={180}
                   />
                 ) : (
-                  <View style={[styles.itemImg, { backgroundColor: colors.surfaceElevated, borderRadius: radius.lg }]} />
+                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                    <AppIcon name="diamond-stone" size={20} color={colors.textMuted} />
+                  </View>
                 )}
                 {isOutOfStock && (
                   <View style={[styles.outOfStockOverlay, { borderRadius: radius.lg }]}>

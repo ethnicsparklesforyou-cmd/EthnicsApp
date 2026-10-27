@@ -77,22 +77,44 @@ export function getFirstImageUrl(product: any, optimizeWidth: number = 450): str
   return normalizeUrl(rawUrl);
 }
 
+const PREFETCHED_CACHE = new Set<string>();
+
 /**
- * Prefetch a batch of product images into native memory/disk cache ahead of time
+ * Prefetch a batch of product images into native memory/disk cache ahead of time.
+ * Deduplicates requests and staggers secondary items so visible cards load instantly.
  */
-export function prefetchProductImages(products: any[], maxCount: number = 6, optimizeWidth: number = 450): void {
+export function prefetchProductImages(products: any[], maxCount: number = 8, optimizeWidth: number = 450): void {
   if (!Array.isArray(products) || products.length === 0) return;
   const targetBatch = products.slice(0, maxCount);
-  targetBatch.forEach(product => {
+
+  // Immediate priority batch (top 4 cards)
+  const immediate = targetBatch.slice(0, 4);
+  const secondary = targetBatch.slice(4);
+
+  immediate.forEach(product => {
     try {
       const uri = getFirstImageUrl(product, optimizeWidth);
-      if (uri && typeof uri === 'string' && (uri.startsWith('http://') || uri.startsWith('https://'))) {
+      if (uri && !PREFETCHED_CACHE.has(uri) && (uri.startsWith('http://') || uri.startsWith('https://'))) {
+        PREFETCHED_CACHE.add(uri);
         Image.prefetch(uri).catch(() => { });
       }
-    } catch {
-      // Ignore prefetch error silently
-    }
+    } catch {}
   });
+
+  // Stagger secondary items after a small delay to avoid choking network bandwidth
+  if (secondary.length > 0) {
+    setTimeout(() => {
+      secondary.forEach(product => {
+        try {
+          const uri = getFirstImageUrl(product, optimizeWidth);
+          if (uri && !PREFETCHED_CACHE.has(uri) && (uri.startsWith('http://') || uri.startsWith('https://'))) {
+            PREFETCHED_CACHE.add(uri);
+            Image.prefetch(uri).catch(() => { });
+          }
+        } catch {}
+      });
+    }, 300);
+  }
 }
 
 
